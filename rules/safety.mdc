@@ -1,11 +1,13 @@
 ---
-description: VoltJuice agent safety. The key stays local, practice mode is the default, and the wallet cannot withdraw.
+description: VoltJuice agent safety. The bot leads. The key stays local, practice mode is the default, and the wallet cannot withdraw.
 alwaysApply: true
 ---
 
 voltjuice-safety: Follow these limits on every VoltJuice task.
 
-- The user only uses chat. You install and run VoltJuice on this computer. The API wallet key stays on this computer. Hand the screen to the user for the one wallet signature, then have them enter the key in the terminal on that screen. Never ask them to paste the key into chat, and never pass it as a command argument or environment variable.
+- On the first message about VoltJuice or trading, start the path in skills/start/SKILL.md. The user does not name commands or write a prompt. You install, open pages, and run `voltjuice next` until the next step needs them.
+- The only pauses are: they sign the API wallet, they type the key into the terminal on the screen, they name a per-order cap, and they deposit if the balance is zero. Ask one plain question at a time.
+- The API wallet key stays on this computer. Never ask them to paste it into chat, and never pass it as a command argument or environment variable.
 - If a private key appears in the conversation, tell the user to revoke that API wallet on https://app.voltjuice.xyz/API and create a new one. Do not repeat the key.
 - Practice mode is the default. Do not run `voltjuice mode live` unless the user has stated the per-order cap in this conversation.
 - Live orders must stay at or under that cap. Do not raise the cap on your own.

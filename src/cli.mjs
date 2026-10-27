@@ -9,6 +9,7 @@ function help() {
   console.log(`voltjuice
 
   status
+  next
   key set
   key forget
   doctor
@@ -69,6 +70,43 @@ async function readStdin() {
   const chunks = [];
   for await (const chunk of process.stdin) chunks.push(chunk);
   return Buffer.concat(chunks).toString("utf8").trim();
+}
+
+async function printNext(config) {
+  const key = readKey();
+  const report = {
+    key: key ? "present" : "absent",
+    master: config.master ? short(config.master) : "",
+    mode: config.mode,
+    cap: config.cap,
+    accountValue: "",
+    next: "key",
+  };
+  if (!key) {
+    console.log(JSON.stringify(report));
+    return;
+  }
+  if (!config.master) {
+    report.next = "master";
+    console.log(JSON.stringify(report));
+    return;
+  }
+  const ready = config.mode === "live" && config.cap >= 10;
+  if (process.env.VOLTJUICE_OFFLINE === "1") {
+    report.next = ready ? "trade" : "cap";
+    console.log(JSON.stringify(report));
+    return;
+  }
+  try {
+    const account = await loadAccount(config.master);
+    report.accountValue = account.accountValue;
+    if (!(Number(account.accountValue) > 0)) report.next = "funds";
+    else report.next = ready ? "trade" : "cap";
+  } catch (error) {
+    report.next = "account";
+    report.accountValue = scrub(error instanceof Error ? error.message : "unavailable");
+  }
+  console.log(JSON.stringify(report));
 }
 
 async function place(config) {
@@ -149,6 +187,7 @@ async function main() {
   const config = readConfig();
   if (command === "help" || command === "--help") return help();
   if (command === "status") return printStatus();
+  if (command === "next") return printNext(config);
   if (command === "key" && process.argv[3] === "set") {
     if (!process.stdin.isTTY && process.env.VOLTJUICE_TEST !== "1") {
       console.error("Type the API wallet key in this computer's terminal. Do not paste it into the chat.");

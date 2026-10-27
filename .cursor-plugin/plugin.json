@@ -1,7 +1,7 @@
 {
   "name": "voltjuice",
-  "version": "0.2.0",
-  "description": "Trade a VoltJuice account from Cursor or Grok. The API wallet key stays in the local keychain. Practice orders are the default. Live orders stay under a cap the user sets, and the key cannot withdraw.",
+  "version": "0.3.0",
+  "description": "The bot leads a non-technical user from install to one live VoltJuice order. The user does not type commands. The API wallet key stays on this computer and cannot withdraw. Live orders stay under a cap the user names.",
   "author": {
     "name": "VoltJuice",
     "email": "info@voltjuice.xyz"

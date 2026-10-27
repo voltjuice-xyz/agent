@@ -1,39 +1,18 @@
 ---
 name: voltjuice-trade
-description: Place VoltJuice practice or live orders from the local CLI. Use when the user asks the agent to trade, check markets, open, reduce, or review a VoltJuice position.
+description: Place a VoltJuice order after the start path says next is trade. Do not ask the user which command to run.
 ---
 
 # Trade
 
-Run the `voltjuice` command. Do not invent balances. Read them with `voltjuice account`.
+If `voltjuice next` is not `trade`, finish the start path first.
 
-## Practice
-
-Practice is the default. Orders are recorded on this computer and are not sent.
+Read the account with `voltjuice account`. Do not invent a balance.
 
 ```bash
-voltjuice markets
-voltjuice order --market BTC --side buy --notional 20
-voltjuice paper
-```
-
-The smallest order is 10 USDC.
-
-## Live
-
-Switch only after the user names a per-order cap:
-
-```bash
-voltjuice mode live --cap 100
 voltjuice order --market BTC --side buy --notional 20
 ```
 
-An order above the cap is refused. To close, use the opposite side and `--reduce-only`. A reduce-only order with no notional closes the position only when that position's value is within the cap.
+Use the market, side, and size the user already gave. The smallest order is 10 USDC. An order above the cap is refused. Do not raise the cap. Close with the opposite side and `--reduce-only`.
 
-```bash
-voltjuice order --market BTC --side sell --reduce-only
-```
-
-Optional `--leverage` is limited to 1–20 and changes the whole position.
-
-Return to practice with `voltjuice mode paper`. Practice mode does not erase the key.
+Optional `--leverage` is 1–20 and changes the whole position. Return to practice with `voltjuice mode paper`.

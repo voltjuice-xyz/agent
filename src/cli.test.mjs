@@ -72,6 +72,19 @@ test("the cloud file store locks the key and doctor does not print it", () => {
   assert.equal(doctor.stdout.includes(key), false);
 });
 
+test("next names the single missing step", () => {
+  const home = mkdtempSync(join(tmpdir(), "vj-"));
+  const empty = run(["next"], { home });
+  assert.match(empty.stdout, /"next":"key"/);
+  const key = `0x${"ab".repeat(32)}`;
+  assert.equal(run(["key", "set"], { home, input: `${key}\n` }).status, 0);
+  assert.match(run(["next"], { home }).stdout, /"next":"master"/);
+  assert.equal(run(["master", `0x${"12".repeat(20)}`], { home }).status, 0);
+  assert.match(run(["next"], { home }).stdout, /"next":"cap"/);
+  assert.equal(run(["mode", "live", "--cap", "20"], { home }).status, 0);
+  assert.match(run(["next"], { home }).stdout, /"next":"trade"/);
+});
+
 test("a piped key is refused outside the test harness", () => {
   const key = `0x${"ab".repeat(32)}`;
   const result = run(["key", "set"], { input: `${key}\n`, test: false, keyFile: false });
