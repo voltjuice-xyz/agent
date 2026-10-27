@@ -19,13 +19,13 @@ voltjuice doctor
 voltjuice markets
 ```
 
-2. `next` is `key`. Open https://app.voltjuice.xyz/API. Hand over the screen so they can log in, create one API wallet, and sign once. Run `voltjuice key set` in a terminal on this screen. They type the key there and press Enter. They must not paste the key into the chat. If they do, tell them to revoke that wallet on the API page and repeat this step. Do not repeat the key.
+2. `next` is `key`. They use their own phone at https://app.voltjuice.xyz/API to log in, create one API wallet, and sign once. Open this computer's browser only if they ask. Secret-request a card named `VOLTJUICE_API_KEY`. They type the key into that card, not into the chat and not into a terminal. Then run `voltjuice key set` with no arguments. It reads the card. Never print the key. If a key appears in the chat, tell them to revoke that wallet and repeat this step.
 
-3. `next` is `master`. Read the account address on the logged-in page and run `voltjuice master 0x...`. Do not ask them to copy it.
+3. `next` is `master`. The account address is not a secret. Use the 0x address they pasted, or read it from the page, and run `voltjuice master 0x...`.
 
 4. `next` is `funds`. Open the deposit page. They deposit and pay the network fee, then tell you they are done.
 
-5. `next` is `cap`. Ask only: how many USDC one live order may use, at least 10. Then run `voltjuice mode live --cap` with their number.
+5. `next` is `cap`. Ask only: how many USDC one live order may use, at least 11. Then run `voltjuice mode live --cap` with their number.
 
 6. `next` is `trade`. If they already named a market, side, and size, send it. Otherwise ask once: which market, buy or sell, and how many USDC. Then run `voltjuice account` and `voltjuice order`. Tell them whether it was sent.
 
@@ -42,10 +42,10 @@ voltjuice markets
 | `voltjuice order --market BTC --side buy --notional 20` | Send one order |
 | `voltjuice mode paper` | Stop sending live orders; the key stays |
 
-The smallest order is 10 USDC. `--leverage` is optional and limited to 1–20. To close, use the opposite side and `--reduce-only`. There is no withdraw, transfer, or margin-move command.
+The smallest order is 11 USDC. A 10 USDC order can be rejected by the size step, so do not send one. `--leverage` is optional and limited to 1–20. To close, use the opposite side and `--reduce-only`. There is no withdraw, transfer, or margin-move command.
 
 ## 繁體中文
 
 用家只會傾計。你負責安裝、開頁、同落命令。用家唔使打指令，亦唔使寫 prompt。第一句講到交易，就由上面條路徑帶去第一張真單。
 
-私鑰只可以喺你開嘅終端機入面輸入。出現喺對話就叫用家去 API 頁撤銷，再來一次。你唔好重覆把匙。
+登入同簽名用用家自己部手機。私鑰只填入名為 VOLTJUICE_API_KEY 的密鑰卡，唔好貼去對話，亦唔使打落終端機。帳戶地址可以貼來對話。出現私鑰就叫用家去 API 頁撤銷，再來一次。你唔好重覆把匙。每筆最少 11 USDC。

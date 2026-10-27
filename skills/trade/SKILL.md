@@ -13,6 +13,6 @@ Read the account with `voltjuice account`. Do not invent a balance.
 voltjuice order --market BTC --side buy --notional 20
 ```
 
-Use the market, side, and size the user already gave. The smallest order is 10 USDC. An order above the cap is refused. Do not raise the cap. Close with the opposite side and `--reduce-only`.
+Use the market, side, and size the user already gave. The smallest order is 11 USDC. An order above the cap is refused. Do not raise the cap. Close with the opposite side and `--reduce-only`.
 
 Optional `--leverage` is 1–20 and changes the whole position. Return to practice with `voltjuice mode paper`.

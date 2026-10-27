@@ -7,4 +7,4 @@ description: Connect one VoltJuice API wallet. Use only as part of the start pat
 
 Follow `skills/start/SKILL.md`. Do not stop after install and ask what to do next.
 
-The user signs once on https://app.voltjuice.xyz/API. The key is typed into `voltjuice key set` on this computer's screen, never into the chat. Then you save the account address with `voltjuice master`.
+The user signs once on their phone at https://app.voltjuice.xyz/API. The key goes into a secret card named VOLTJUICE_API_KEY, never into the chat or a terminal. Then run `voltjuice key set` with no arguments and save the account address with `voltjuice master`.

@@ -1,4 +1,4 @@
-export const MIN_NOTIONAL = 10;
+export const MIN_NOTIONAL = 11;
 export const MAX_CAP = 100_000;
 export const MAX_LEVERAGE = 20;
 

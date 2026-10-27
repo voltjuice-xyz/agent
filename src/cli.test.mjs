@@ -19,6 +19,7 @@ function run(args, options = {}) {
   if (options.keyFile === false) delete env.VOLTJUICE_KEY_FILE;
   else env.VOLTJUICE_KEY_FILE = join(home, "key");
   if (options.store) env.VOLTJUICE_STORE = options.store;
+  if (options.extra) Object.assign(env, options.extra);
   const result = spawnSync(process.execPath, [cli, ...args], {
     encoding: "utf8",
     input: options.input,
@@ -83,6 +84,18 @@ test("next names the single missing step", () => {
   assert.match(run(["next"], { home }).stdout, /"next":"cap"/);
   assert.equal(run(["mode", "live", "--cap", "20"], { home }).status, 0);
   assert.match(run(["next"], { home }).stdout, /"next":"trade"/);
+});
+
+test("key set stores a secret-card env value and does not print it", () => {
+  const home = mkdtempSync(join(tmpdir(), "vj-"));
+  const key = `0x${"ab".repeat(32)}`;
+  const saved = run(["key", "set"], { home, extra: { VOLTJUICE_API_KEY: key }, test: false, store: "file", keyFile: false });
+  assert.equal(saved.status, 0);
+  assert.equal(saved.stdout.includes(key), false);
+  assert.match(saved.stdout, /Key stored/);
+  const status = run(["status"], { home, store: "file", keyFile: false });
+  assert.match(status.stdout, /"key":"present"/);
+  assert.equal(status.stdout.includes(key), false);
 });
 
 test("a piped key is refused outside the test harness", () => {

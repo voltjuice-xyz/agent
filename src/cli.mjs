@@ -1,6 +1,9 @@
 #!/usr/bin/env node
+import { existsSync, readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import { Wallet } from "ethers";
-import { clampLeverage, decideOrder, isAddress, isPrivateKey, scrub } from "./decide.mjs";
+import { clampLeverage, decideOrder, isAddress, isPrivateKey, MIN_NOTIONAL, scrub } from "./decide.mjs";
 import { forgetKey, keyStoreName, readKey, writeKey } from "./keychain.mjs";
 import { readConfig, readPaper, recordPaper, setMaster, setMode } from "./store.mjs";
 import { loadAccount, loadMarkets, quoteOrder, sendOrder } from "./trade.mjs";
@@ -63,6 +66,28 @@ function printStatus() {
   );
 }
 
+function secretKey() {
+  const fromEnv = String(process.env.VOLTJUICE_API_KEY ?? "").trim();
+  if (isPrivateKey(fromEnv)) return fromEnv;
+  const paths = [
+    process.env.GROK_BOX_SECRETS,
+    join(homedir(), "box-secrets.json"),
+    join(homedir(), ".grok", "box-secrets.json"),
+  ].filter(Boolean);
+  for (const path of paths) {
+    try {
+      if (!existsSync(path)) continue;
+      const parsed = JSON.parse(readFileSync(path, "utf8"));
+      const card = parsed?.card ?? parsed?.secrets ?? parsed;
+      const value = String(card?.VOLTJUICE_API_KEY ?? "").trim();
+      if (isPrivateKey(value)) return value;
+    } catch {
+      undefined;
+    }
+  }
+  return "";
+}
+
 async function readStdin() {
   if (process.stdin.isTTY) {
     process.stdout.write("Paste the API wallet key, then press Enter.\n");
@@ -91,7 +116,7 @@ async function printNext(config) {
     console.log(JSON.stringify(report));
     return;
   }
-  const ready = config.mode === "live" && config.cap >= 10;
+  const ready = config.mode === "live" && config.cap >= MIN_NOTIONAL;
   if (process.env.VOLTJUICE_OFFLINE === "1") {
     report.next = ready ? "trade" : "cap";
     console.log(JSON.stringify(report));
@@ -145,8 +170,8 @@ async function place(config) {
   const decision = decideOrder({ mode: config.mode, cap: config.cap, notional });
   if (!decision.ok) {
     const message = {
-      small: "The smallest order is 10 USDC.",
-      cap: "Set a live cap from 10 to 100000 before a live order.",
+      small: "The smallest order is 11 USDC.",
+      cap: "Set a live cap from 11 to 100000 before a live order.",
       "over-cap": "That order is above the cap.",
     }[decision.reason];
     console.error(message);
@@ -189,8 +214,15 @@ async function main() {
   if (command === "status") return printStatus();
   if (command === "next") return printNext(config);
   if (command === "key" && process.argv[3] === "set") {
+    const secret = secretKey();
+    if (secret) {
+      const saved = writeKey(secret);
+      console.log(saved ? "Key stored." : "That is not an API wallet key.");
+      if (!saved) process.exit(1);
+      return;
+    }
     if (!process.stdin.isTTY && process.env.VOLTJUICE_TEST !== "1") {
-      console.error("Type the API wallet key in this computer's terminal. Do not paste it into the chat.");
+      console.error("Ask for the API wallet key with a secret card named VOLTJUICE_API_KEY. Do not paste it into the chat.");
       process.exit(1);
     }
     const saved = writeKey(await readStdin());
@@ -220,7 +252,7 @@ async function main() {
   if (command === "mode" && process.argv[3] === "live") {
     const next = setMode("live", flag("--cap"));
     if (!next) {
-      console.error("Pass --cap from 10 to 100000.");
+      console.error("Pass --cap from 11 to 100000.");
       process.exit(1);
     }
     console.log(`Live mode. Per-order cap ${next.cap} USDC.`);

@@ -6,8 +6,8 @@ alwaysApply: true
 voltjuice-safety: Follow these limits on every VoltJuice task.
 
 - On the first message about VoltJuice or trading, start the path in skills/start/SKILL.md. The user does not name commands or write a prompt. You install, open pages, and run `voltjuice next` until the next step needs them.
-- The only pauses are: they sign the API wallet, they type the key into the terminal on the screen, they name a per-order cap, and they deposit if the balance is zero. Ask one plain question at a time.
-- The API wallet key stays on this computer. Never ask them to paste it into chat, and never pass it as a command argument or environment variable.
+- The only pauses are: they sign the API wallet on their phone, they fill the VOLTJUICE_API_KEY secret card, they paste the account address, they name a per-order cap of at least 11, and they deposit if the balance is zero. Ask one plain question at a time.
+- The API wallet key stays on this computer. Ask for it with a secret card named VOLTJUICE_API_KEY, then run `voltjuice key set` with no arguments. Never ask them to paste it into chat or type it into a terminal, and never pass it as a command argument.
 - If a private key appears in the conversation, tell the user to revoke that API wallet on https://app.voltjuice.xyz/API and create a new one. Do not repeat the key.
 - Practice mode is the default. Do not run `voltjuice mode live` unless the user has stated the per-order cap in this conversation.
 - Live orders must stay at or under that cap. Do not raise the cap on your own.

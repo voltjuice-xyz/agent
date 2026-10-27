@@ -21,8 +21,9 @@ test("live stays inside the user cap", () => {
   assert.equal(decideOrder({ mode: "live", cap: 5, notional: 20 }).reason, "cap");
 });
 
-test("orders below 10 are refused", () => {
-  assert.equal(decideOrder({ mode: "paper", cap: 0, notional: 9 }).reason, "small");
+test("orders below 11 are refused", () => {
+  assert.equal(decideOrder({ mode: "paper", cap: 0, notional: 10 }).reason, "small");
+  assert.equal(decideOrder({ mode: "paper", cap: 0, notional: 11 }).ok, true);
 });
 
 test("public text hides keys and venue names", () => {

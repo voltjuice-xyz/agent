@@ -24,13 +24,17 @@ If `voltjuice` is missing after `npm link`, call `node ~/voltjuice-agent/src/cli
 
 ## Steps from `voltjuice next`
 
-`next` is `key`. Open https://app.voltjuice.xyz/API. Hand them the screen once:
+`next` is `key`. Send them to https://app.voltjuice.xyz/API on their own phone. They log in, create one API wallet, and sign once. Do not make them use this computer's browser unless they ask you to open it.
 
-「我開咗 API 錢包頁。你登入，建立一個 API 錢包，簽一次名。私鑰出嚟之後唔好貼去對話。貼落我開嘅終端機，然後按 Enter。搞掂話我知。」
+Then secret-request a card named `VOLTJUICE_API_KEY`. That card is the same kind as a saved API token: they type the key there, it stays out of the chat, and you do not open a terminal for it. Say:
 
-On this computer, run `voltjuice key set` in a terminal they can see. They type the key there. Take the screen back when they say they are done. If a key appears in the chat, tell them to revoke that wallet on the API page and start this step again. Do not repeat the key.
+「用你部手機打開 API 錢包頁，登入，建立一個 API 錢包，簽一次名。私鑰填入我彈出嘅密鑰卡，唔好貼去對話，亦唔使打落終端機。頁面顯示嘅帳戶地址（0x 開頭）可以貼來呢度，佢唔係私鑰。」
 
-`next` is `master`. Read the logged-in account address from the page. Save it with `voltjuice master 0x...`. Do not ask them to copy it.
+When the card is stored, run `voltjuice key set` with no arguments. It reads `VOLTJUICE_API_KEY` from the secret card or the environment. Never print that value, and never put it in the command. If a key appears in the chat, tell them to revoke that wallet on the API page and start this step again. Do not repeat the key.
+
+Save the account address they pasted, or the one you read from the page, with `voltjuice master`.
+
+`next` is `master`. If they already pasted the account address, save it with `voltjuice master`. If not, ask only for that 0x address from the API page. It is not the key.
 
 `next` is `funds`. Open the deposit page on the trading site. Say:
 
@@ -42,13 +46,13 @@ Wait. Then run `voltjuice next` again.
 
 `next` is `cap`. One question, nothing else:
 
-「每筆真單最多幾多 USDC？最少 10。你講一個數字就得。」
+「每筆真單最多幾多 USDC？最少 11。你講一個數字就得。」
 
-When they name a number from 10 to 100000, run `voltjuice mode live --cap` with that number. Do not pick a cap yourself.
+When they name a number from 11 to 100000, run `voltjuice mode live --cap` with that number. Do not pick a cap yourself.
 
 `next` is `trade`. If they already named a market, side, and size, place that order. Otherwise one question:
 
-「第一張真單：邊個市場、買定賣、幾多 USDC？例如 BTC 買 20。」
+「第一張真單：邊個市場、買定賣、幾多 USDC？最少 11。例如 BTC 買 20。」
 
 Then:
 
@@ -57,7 +61,7 @@ voltjuice account
 voltjuice order --market BTC --side buy --notional 20
 ```
 
-Use their market, side, and size. The smallest order is 10 USDC. An order above the cap is refused. Do not raise the cap. Tell them the result in one sentence: sent, or not sent and why.
+Use their market, side, and size. The smallest order is 11 USDC. An order above the cap is refused. Do not raise the cap. Tell them the result in one sentence: sent, or not sent and why.
 
 If the order is not accepted, open https://app.voltjuice.xyz/trade and say:
 
