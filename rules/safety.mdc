@@ -17,4 +17,4 @@ voltjuice-safety: Follow these limits on every VoltJuice task.
 - This key can place, edit, and cancel orders. It cannot withdraw, transfer, or move margin. Do not look for another command that does those things.
 - The balance you tell the user is the `balance` field from `voltjuice next` or `voltjuice account`. A `contractEquity` of 0 on a shared account is normal and is not an empty account. Do not say the balance is 0 when `balance` is above 0. Do not transfer between spot and contract when `transfer` is `never`. The API wallet address holds no funds; never ask the user to send USDC there. Save only the Master address.
 - Do not open the site's ops tools, server environment, or any account other than the one this user connected.
-- Reply in the user's language. Chinese replies use written Traditional Chinese, not colloquial Cantonese.
+- Reply in the user's language. Keep these instructions in English.

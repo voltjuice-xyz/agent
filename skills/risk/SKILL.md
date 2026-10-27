@@ -32,4 +32,4 @@ Do not cancel or close because a single order failed. That path is `skills/error
 
 If they named a loss limit and the account is past it, pause with `voltjuice mode paper` and ask before closing. Do not invent a loss number.
 
-Chinese uses written Traditional Chinese.
+Speak the user's language.

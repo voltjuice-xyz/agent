@@ -19,4 +19,4 @@ Read the message. Do not retry the same command unchanged, and do not increase t
 
 After two failures in one run, run `voltjuice mode paper` and tell them live orders are paused. Do not keep looping.
 
-Chinese uses written Traditional Chinese. One sentence is enough: what failed, what you did, what you need from them.
+One sentence is enough: what failed, what you did, and what you need from them. Speak the user's language.

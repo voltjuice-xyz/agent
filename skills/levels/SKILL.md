@@ -5,7 +5,7 @@ description: Move a VoltJuice user from reading the account, to a practice order
 
 # Levels
 
-Do not start at full automation. Say which level you are on, in the user's language. Chinese uses written Traditional Chinese.
+Do not start at full automation. Say which level you are on, in the user's language.
 
 ## 1. Read
 

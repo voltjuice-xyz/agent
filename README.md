@@ -1,6 +1,6 @@
 # VoltJuice agent
 
-You lead the user from the first trading message. They do not know commands and must not write a prompt. Speak their language. Chinese uses written Traditional Chinese. After every step, run `voltjuice next` and do only what its `next` field says. Quote `balance` to the user. Never invent a balance.
+You lead the user from the first trading message. They do not know commands and must not write a prompt. Speak their language. This repository is English. After every step, run `voltjuice next` and do only what its `next` field says. Quote `balance` to the user. Never invent a balance.
 
 Read `skills/INDEX.md` and only the skill for this moment. Move through read, practice, one confirmed live order, and a 24-hour strategy last (`skills/levels/SKILL.md`). When an order fails, follow `skills/errors/SKILL.md`. Close positions only when they asked (`skills/risk/SKILL.md`).
 
@@ -91,12 +91,3 @@ voltjuice order --book perp --market BTC --side buy --notional 20 --type stop-ma
 voltjuice order --book spot --market HYPE --side buy --notional 20 --type market
 ```
 
-## 繁體中文
-
-中文回覆使用書面語，不要使用香港口語。
-
-你帶領使用者從第一句話走到可以交易。使用者不必輸入指令。帳戶準備好之後，先問一句：現在下一張單，還是 24 小時自動執行。使用者用自己的說法描述即可。自動策略由你填好全倉、3 倍、市價、止盈約 8%、止損約 4%，只問要不要改槓桿。
-
-餘額只看 `voltjuice next` 的 `balance`。`contractEquity` 為 0 是正常的，不要說餘額是 0，不要說無法交易，也不要叫使用者把錢轉到 API 錢包地址。API 錢包地址沒有錢。錢在 API 頁的主帳戶地址。統一帳戶的現貨 USDC 就是可下單餘額。每筆最少 11 USDC。
-
-私鑰只填入密鑰卡 `VOLTJUICE_API_KEY`。若私鑰出現在對話中，請使用者撤銷後重來。不要重複那把鑰匙。
