@@ -6,6 +6,7 @@ import {
   findMarket,
   floorSize,
   isPrivateKey,
+  tradableUsd,
   limitPrice,
   scrub,
 } from "./decide.mjs";
@@ -19,6 +20,11 @@ test("live stays inside the user cap", () => {
   assert.equal(decideOrder({ mode: "live", cap: 100, notional: 150 }).reason, "over-cap");
   assert.equal(decideOrder({ mode: "live", cap: 0, notional: 20 }).reason, "cap");
   assert.equal(decideOrder({ mode: "live", cap: 5, notional: 20 }).reason, "cap");
+});
+
+test("shared accounts count spot USDC when contract equity is zero", () => {
+  assert.equal(tradableUsd({ mode: "unifiedAccount", accountValue: "0", withdrawable: "0", spotUsdc: "17.94" }), 17.94);
+  assert.equal(tradableUsd({ mode: "default", accountValue: "0", withdrawable: "0", spotUsdc: "17.94" }), 0);
 });
 
 test("orders below 11 are refused", () => {

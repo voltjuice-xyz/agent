@@ -21,7 +21,7 @@ voltjuice markets
 
 2. `next` is `key`. They use their own phone at https://app.voltjuice.xyz/API to log in, create one API wallet, and sign once. Open this computer's browser only if they ask. Secret-request a card named `VOLTJUICE_API_KEY`. They type the key into that card, not into the chat and not into a terminal. Then run `voltjuice key set` with no arguments. It reads the card. Never print the key. If a key appears in the chat, tell them to revoke that wallet and repeat this step.
 
-3. `next` is `master`. The account address is not a secret. Use the 0x address they pasted, or read it from the page, and run `voltjuice master 0x...`.
+3. `next` is `master`. Save the Master address from the API page with `voltjuice master 0x...`. Do not use the API wallet address or the address of the key. Those hold no funds. A shared account's spot USDC counts; a zero contract equity alone is not an empty account.
 
 4. `next` is `funds`. Open the deposit page. They deposit and pay the network fee, then tell you they are done.
 

@@ -1,6 +1,6 @@
 import { ExchangeClient, HttpTransport, InfoClient } from "@nktkas/hyperliquid";
 import { Wallet } from "ethers";
-import { findMarket, floorSize, limitPrice, scrub } from "./decide.mjs";
+import { findMarket, floorSize, limitPrice, scrub, tradableUsd } from "./decide.mjs";
 
 const DESK_FEE_ADDRESS = "0xa9F943F44a8068273B0D4a2b6eaB529e2e2Ee483";
 const DESK_FEE_TENTHS_BPS = 15;
@@ -23,7 +23,16 @@ export async function loadMarkets() {
 }
 
 export async function loadAccount(address) {
-  const state = await info().clearinghouseState({ user: address });
+  const client = info();
+  const [state, spot, mode] = await Promise.all([
+    client.clearinghouseState({ user: address }),
+    client.spotClearinghouseState({ user: address }),
+    client.userAbstraction({ user: address }).catch(() => ""),
+  ]);
+  const usdc = (spot.balances ?? []).find((row) => row.coin === "USDC");
+  const spotUsdc = usdc?.total ?? "0";
+  const accountValue = state.marginSummary?.accountValue ?? "0";
+  const withdrawable = state.withdrawable ?? "0";
   const positions = (state.assetPositions ?? [])
     .map((row) => ({
       coin: row.position.coin,
@@ -32,7 +41,9 @@ export async function loadAccount(address) {
     }))
     .filter((row) => Number(row.size) !== 0);
   return {
-    accountValue: state.marginSummary?.accountValue ?? "0",
+    accountValue: String(tradableUsd({ mode, accountValue, withdrawable, spotUsdc })),
+    spotUsdc,
+    mode: typeof mode === "string" ? mode : "",
     positions,
   };
 }

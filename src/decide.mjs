@@ -46,6 +46,20 @@ export function limitPrice(mark, side, slippageBps = 50) {
   return toSignificantDigits(raw);
 }
 
+/** Shared accounts can trade the spot USDC when the contract equity is still 0. */
+export function tradableUsd(input) {
+  const perp = Number(input.accountValue);
+  const spot = Number(input.spotUsdc);
+  const free = Number(input.withdrawable);
+  const equity = Number.isFinite(perp) && perp > 0 ? perp : 0;
+  const spotUsd = Number.isFinite(spot) && spot > 0 ? spot : 0;
+  const withdrawable = Number.isFinite(free) && free > 0 ? free : 0;
+  if (input.mode === "unifiedAccount" || input.mode === "portfolioMargin") {
+    return withdrawable > 0 ? withdrawable : spotUsd;
+  }
+  return withdrawable > 0 ? withdrawable : equity;
+}
+
 /** Practice is the default. Live requires a user cap and stays inside it. */
 export function decideOrder(input) {
   const notional = Number(input.notional);

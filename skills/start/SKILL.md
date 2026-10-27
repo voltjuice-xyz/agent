@@ -34,7 +34,7 @@ When the card is stored, run `voltjuice key set` with no arguments. It reads `VO
 
 Save the account address they pasted, or the one you read from the page, with `voltjuice master`.
 
-`next` is `master`. If they already pasted the account address, save it with `voltjuice master`. If not, ask only for that 0x address from the API page. It is not the key.
+`next` is `master`. Save the Master address shown on the API page with `voltjuice master`. Do not use the API wallet address, and do not use the address derived from the key. That key address holds no funds. If the value is still 0 after the Master address is saved, ask them to copy the Master address from the page again before treating it as an empty deposit.
 
 `next` is `funds`. Open the deposit page on the trading site. Say:
 
