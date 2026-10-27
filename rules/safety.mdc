@@ -1,0 +1,15 @@
+---
+description: VoltJuice agent safety. The key stays local, practice mode is the default, and the wallet cannot withdraw.
+alwaysApply: true
+---
+
+voltjuice-safety: Follow these limits on every VoltJuice task.
+
+- The API wallet private key belongs in the macOS keychain. Ask the user to run `voltjuice key set` in their own terminal. Never ask them to paste the key into chat, and never pass the key as a command argument or environment variable.
+- If a private key appears in the conversation, tell the user to revoke that API wallet on https://app.voltjuice.xyz/API and create a new one. Do not repeat the key.
+- Practice mode is the default. Do not run `voltjuice mode live` unless the user has stated the per-order cap in this conversation.
+- Live orders must stay at or under that cap. Do not raise the cap on your own.
+- This key can place, edit, and cancel orders. It cannot withdraw, transfer, or move margin. Do not look for another command that does those things.
+- Read balances and positions with the master address, not the API wallet address.
+- Do not open the site's ops tools, server environment, or any account other than the one this user connected.
+- Reply in the user's language.

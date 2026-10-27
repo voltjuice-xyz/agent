@@ -1,0 +1,20 @@
+{
+  "name": "voltjuice-agent",
+  "version": "0.1.0",
+  "description": "Local VoltJuice trading assistant. Keys stay on this computer. Paper mode is the default.",
+  "type": "module",
+  "bin": {
+    "voltjuice": "./src/cli.mjs"
+  },
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@nktkas/hyperliquid": "0.33.3",
+    "ethers": "^6.17.0"
+  },
+  "license": "MIT"
+}
