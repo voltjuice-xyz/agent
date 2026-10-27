@@ -1,7 +1,7 @@
 {
   "name": "voltjuice",
-  "version": "0.3.0",
-  "description": "The bot leads a non-technical user from install to one live VoltJuice order. The user does not type commands. The API wallet key stays on this computer and cannot withdraw. Live orders stay under a cap the user names.",
+  "version": "0.4.0",
+  "description": "One VoltJuice plugin. The bot installs the account, places a single order from plain language, or builds a 24-hour strategy with the defaults filled in. The user does not type commands. The API wallet key stays on this computer and cannot withdraw.",
   "author": {
     "name": "VoltJuice",
     "email": "info@voltjuice.xyz"

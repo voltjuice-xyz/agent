@@ -52,9 +52,9 @@ Wait. Then run `voltjuice next` again.
 
 When they name a number from 11 to 100000, run `voltjuice mode live --cap` with that number. Do not pick a cap yourself.
 
-`next` is `trade`. If they already named a market, side, and size, place that order. Otherwise one question:
+`next` is `trade`. Do not invent an order. Follow `skills/intent/SKILL.md`. If they already described a buy or a 24-hour strategy, use that. Otherwise ask once:
 
-「第一張真單：邊個市場、買定賣、幾多 USDC？最少 11。例如 BTC 買 20。」
+「你想我而家幫你落一張單，定係手機關咗都 24 小時照跑？你用自己的講法講想點買就得。」
 
 Then:
 

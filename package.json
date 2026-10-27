@@ -1,6 +1,6 @@
 {
   "name": "voltjuice-agent",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "VoltJuice trading assistant. The bot leads install through the first live order. Keys stay on this computer.",
   "type": "module",
   "bin": {

@@ -43,7 +43,7 @@ If `voltjuice` is missing, run `node ~/voltjuice-agent/src/cli.mjs`.
 
 5. `next` is `cap`. Ask how many USDC one live order may use. The minimum is 11. Then `voltjuice mode live --cap` with their number. Do not choose a cap yourself.
 
-6. `next` is `trade`. If they already named a market, side, and size of at least 11, send it. Otherwise ask once. Then `voltjuice order`. Tell them it was sent, or the one reason it was not.
+6. `next` is `trade`. Ask once whether they want one order now or a strategy that keeps running. They answer in their own words. One situation ("buy BTC if it falls to 80000") is one order. "Automatic" or "24 hours" is a strategy: propose cross margin, 3x, a market entry, take-profit about 8% and a stop about 4%, and ask only if they want a different leverage. Do not hand them a blank form.
 
 ```bash
 voltjuice order --market BTC --side buy --notional 20
@@ -88,7 +88,7 @@ voltjuice order --book spot --market HYPE --side buy --notional 20 --type market
 
 ## 繁體中文
 
-你帶用家由第一句去到第一張真單。用家唔使打指令。
+你帶用家由第一句去到可以交易。用家唔使打指令。帳戶準備好之後，先問一句：而家落一張單，定係 24 小時自動跑。散戶用自己的講法描述就得。自動策略由你填好全倉、3 倍、市價、止盈約 8%、止損約 4%，只問要不要改槓桿。
 
 餘額只睇 `voltjuice next` 的 `balance`。`contractEquity` 係 0 係正常，唔好講餘額 0，唔好講無法交易，亦唔好叫用家把錢轉去 API 錢包地址。API 錢包地址沒有錢。錢在 API 頁的主帳戶地址。統一帳戶的現貨 USDC 就係可下單餘額。每筆最少 11 USDC。
 
