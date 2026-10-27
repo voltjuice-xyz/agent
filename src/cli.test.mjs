@@ -86,6 +86,17 @@ test("next names the single missing step", () => {
   assert.match(run(["next"], { home }).stdout, /"next":"trade"/);
 });
 
+test("the API wallet address is not accepted as the master", async () => {
+  const { Wallet } = await import("ethers");
+  const home = mkdtempSync(join(tmpdir(), "vj-"));
+  const key = `0x${"ab".repeat(32)}`;
+  assert.equal(run(["key", "set"], { home, input: `${key}\n` }).status, 0);
+  assert.equal(run(["master", new Wallet(key).address], { home }).status, 0);
+  const next = run(["next"], { home });
+  assert.match(next.stdout, /"reason":"key-address"/);
+  assert.equal(next.stdout.includes(key), false);
+});
+
 test("key set stores a secret-card env value and does not print it", () => {
   const home = mkdtempSync(join(tmpdir(), "vj-"));
   const key = `0x${"ab".repeat(32)}`;

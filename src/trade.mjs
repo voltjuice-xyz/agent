@@ -1,6 +1,6 @@
 import { ExchangeClient, HttpTransport, InfoClient } from "@nktkas/hyperliquid";
 import { Wallet } from "ethers";
-import { findMarket, floorSize, limitPrice, scrub, tradableUsd } from "./decide.mjs";
+import { findMarket, floorSize, limitPrice, MIN_NOTIONAL, scrub, tradableUsd } from "./decide.mjs";
 
 const DESK_FEE_ADDRESS = "0xa9F943F44a8068273B0D4a2b6eaB529e2e2Ee483";
 const DESK_FEE_TENTHS_BPS = 15;
@@ -40,10 +40,16 @@ export async function loadAccount(address) {
       value: Number(row.position.positionValue ?? 0),
     }))
     .filter((row) => Number(row.size) !== 0);
+  const modeName = typeof mode === "string" ? mode : "";
+  const tradable = tradableUsd({ mode: modeName, accountValue, withdrawable, spotUsdc });
   return {
-    accountValue: String(tradableUsd({ mode, accountValue, withdrawable, spotUsdc })),
+    accountValue: String(tradable),
+    balance: String(tradable),
     spotUsdc,
-    mode: typeof mode === "string" ? mode : "",
+    contractEquity: String(accountValue),
+    mode: modeName,
+    canTrade: tradable >= MIN_NOTIONAL,
+    transfer: modeName === "unifiedAccount" || modeName === "portfolioMargin" ? "never" : "split-only",
     positions,
   };
 }

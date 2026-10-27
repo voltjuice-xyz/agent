@@ -7,7 +7,7 @@ description: Lead a non-technical user from nothing to one live VoltJuice order.
 
 The user only chats. You install, open pages, and run commands. They never type a command and never write a prompt for you. Speak their language. If they write Chinese, use the lines below.
 
-Run `voltjuice next` after every step. Do the computer work for that step, then run it again. Stop only for the human actions in that step.
+Run `voltjuice next` after every step. Obey its `note`. The user's balance is the `balance` field. `contractEquity` of `"0"` with `canTrade` true is a funded shared account. Say `balance`, then continue. Do not say the balance is 0, do not say trading is impossible, and do not move funds to the API wallet address. `transfer` of `never` means you do not offer a spot-to-contract move.
 
 ## Install, once
 
@@ -36,9 +36,11 @@ Save the account address they pasted, or the one you read from the page, with `v
 
 `next` is `master`. Save the Master address shown on the API page with `voltjuice master`. Do not use the API wallet address, and do not use the address derived from the key. That key address holds no funds. If the value is still 0 after the Master address is saved, ask them to copy the Master address from the page again before treating it as an empty deposit.
 
-`next` is `funds`. Open the deposit page on the trading site. Say:
+`next` is `funds` only when `balance` is `"0"`. Open the deposit page. Say:
 
 「帳戶未見餘額。我開咗存款頁，你存入之後話我知。網路費由你付。」
+
+If `balance` is above 0, this step does not apply. Do not say it.
 
 Wait. Then run `voltjuice next` again.
 

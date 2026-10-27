@@ -116,6 +116,14 @@ async function printNext(config) {
     console.log(JSON.stringify(report));
     return;
   }
+  const signer = key ? new Wallet(key).address.toLowerCase() : "";
+  if (signer && config.master === signer) {
+    report.next = "master";
+    report.reason = "key-address";
+    report.note = "That address is the API wallet. It holds no funds. Save the Master address from the API page.";
+    console.log(JSON.stringify(report));
+    return;
+  }
   const ready = config.mode === "live" && config.cap >= MIN_NOTIONAL;
   if (process.env.VOLTJUICE_OFFLINE === "1") {
     report.next = ready ? "trade" : "cap";
@@ -124,9 +132,20 @@ async function printNext(config) {
   }
   try {
     const account = await loadAccount(config.master);
-    report.accountValue = account.accountValue;
-    if (!(Number(account.accountValue) > 0)) report.next = "funds";
-    else report.next = ready ? "trade" : "cap";
+    report.balance = account.balance;
+    report.spotUsdc = account.spotUsdc;
+    report.contractEquity = account.contractEquity;
+    report.accountMode = account.mode;
+    report.canTrade = account.canTrade;
+    report.transfer = account.transfer;
+    report.accountValue = account.balance;
+    if (!(Number(account.balance) > 0)) {
+      report.next = "funds";
+      report.note = "Tradable balance is 0. Ask for a deposit. Do not move funds to the API wallet address.";
+    } else {
+      report.next = ready ? "trade" : "cap";
+      report.note = "Tell the user the balance field. Contract equity 0 is normal on a shared account. Do not transfer and do not say the balance is 0.";
+    }
   } catch (error) {
     report.next = "account";
     report.accountValue = scrub(error instanceof Error ? error.message : "unavailable");
@@ -291,7 +310,16 @@ async function main() {
       process.exit(1);
     }
     const account = await loadAccount(config.master);
-    console.log(JSON.stringify({ accountValue: account.accountValue, positions: account.positions }));
+    console.log(JSON.stringify({
+      balance: account.balance,
+      spotUsdc: account.spotUsdc,
+      contractEquity: account.contractEquity,
+      accountMode: account.mode,
+      canTrade: account.canTrade,
+      transfer: account.transfer,
+      positions: account.positions,
+      note: "The balance field is what the user can trade. Contract equity 0 does not mean the balance is 0.",
+    }));
     return;
   }
   if (command === "paper") {

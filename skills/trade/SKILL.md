@@ -7,7 +7,7 @@ description: Place a VoltJuice order after the start path says next is trade. Do
 
 If `voltjuice next` is not `trade`, finish the start path first.
 
-Read the account with `voltjuice account`. Do not invent a balance.
+Read `balance` from `voltjuice account`. That is the tradable USDC. Do not invent a balance, and do not call `contractEquity` the balance. If `canTrade` is true, place the order.
 
 ```bash
 voltjuice order --market BTC --side buy --notional 20
