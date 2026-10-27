@@ -81,8 +81,11 @@ An automatic strategy repeats. Before saving one, write every choice into the ro
 - Take-profit and stop-loss are `--tp` and `--sl` on a perp order. A long protects above and below the mark. A short is the other way. Spot has no contract protection.
 - Each run reads `voltjuice account` first, then sends at or under the cap. Do not raise the cap. Do not retry a refused order larger.
 
+Market and limit are the words you use with a beginner. When they ask for a stop, a standalone take-profit, a ladder, TWAP, a chase, or a trailing stop, read `skills/orders/SKILL.md` and use only a type listed there. TWAP needs at least 100 USDC. Chase and a trailing stop are a routine that replaces the previous order, using `voltjuice orders` and `voltjuice cancel`.
+
 ```bash
 voltjuice order --book perp --market BTC --side buy --notional 20 --type limit --price 79000 --margin isolated --leverage 3 --tp 85000 --sl 76000
+voltjuice order --book perp --market BTC --side buy --notional 20 --type stop-market --trigger 82000
 voltjuice order --book spot --market HYPE --side buy --notional 20 --type market
 ```
 

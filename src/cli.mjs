@@ -6,7 +6,7 @@ import { Wallet } from "ethers";
 import { decideOrder, isAddress, isPrivateKey, MIN_NOTIONAL, nextFromBalance, planOrder, scrub } from "./decide.mjs";
 import { forgetKey, keyStoreName, readKey, writeKey } from "./keychain.mjs";
 import { readConfig, readPaper, recordPaper, setMaster, setMode } from "./store.mjs";
-import { loadAccount, loadMarkets, loadSpotMarkets, sendOrder } from "./trade.mjs";
+import { cancelOrder, listOrders, loadAccount, loadMarkets, loadSpotMarkets, sendOrder } from "./trade.mjs";
 
 function help() {
   console.log(`voltjuice
@@ -22,7 +22,9 @@ function help() {
   markets
   account
   paper
-  order --market BTC --side buy --notional 20 [--book perp|spot] [--type market|limit --price 80000] [--margin cross|isolated] [--leverage 5] [--tp 90000] [--sl 70000] [--reduce-only]
+  order --market BTC --side buy --notional 20 [--book perp|spot] [--type market|limit|stop-market|stop-limit|tp-market|tp-limit|scale|twap] [--price 80000] [--trigger 81000] [--scale-from 78000 --scale-to 76000 --scale-count 5] [--minutes 30] [--margin cross|isolated] [--leverage 5] [--tp 90000] [--sl 70000] [--reduce-only]
+  orders
+  cancel --market BTC --oid 123
 
 Practice mode is the default. The API wallet key stays in the keychain and cannot withdraw.`);
 }
@@ -158,7 +160,7 @@ async function place(config) {
   }
   const reduceOnly = has("--reduce-only");
   const book = flag("--book") === "spot" ? "spot" : "perp";
-  const orderType = flag("--type") === "limit" ? "limit" : "market";
+  const orderType = flag("--type") || "market";
   const margin = flag("--margin") === "isolated" ? "isolated" : "cross";
   let notional = Number(flag("--notional"));
   if (reduceOnly && !flag("--notional")) {
@@ -209,6 +211,11 @@ async function place(config) {
     szDecimals: listed.szDecimals,
     maxLeverage: listed.maxLeverage,
     price: flag("--price"),
+    trigger: flag("--trigger"),
+    scaleFrom: flag("--scale-from"),
+    scaleTo: flag("--scale-to"),
+    scaleCount: flag("--scale-count"),
+    minutes: flag("--minutes"),
     margin,
     leverage: flag("--leverage"),
     tp: flag("--tp"),
@@ -218,9 +225,13 @@ async function place(config) {
   if (!plan.ok) {
     const message = {
       side: "Pass --side buy or --side sell.",
-      "spot-plain": "Spot orders do not take leverage, isolated margin, or contract protection.",
+      "spot-plain": "Spot orders are market or limit only.",
       leverage: "Leverage must be from 1 to 20 and within that market.",
-      limit: "A limit order needs --price.",
+      type: "Unknown order type.",
+      limit: "That order needs --price.",
+      trigger: "The trigger is missing or on the wrong side of the mark.",
+      scale: "A scale needs --scale-from, --scale-to, and --scale-count from 2 to 20.",
+      twap: "A TWAP order needs at least 100 USDC.",
       tp: "Take-profit is on the wrong side of the mark.",
       sl: "Stop-loss is on the wrong side of the mark.",
       size: "The size is too small.",
@@ -347,6 +358,39 @@ async function main() {
   }
   if (command === "paper") {
     for (const row of readPaper()) console.log(JSON.stringify(row));
+    return;
+  }
+  if (command === "orders") {
+    if (!config.master) {
+      console.error("Set the master address first.");
+      process.exit(1);
+    }
+    const rows = await listOrders(config.master);
+    if (!rows.length) console.log(JSON.stringify({ orders: 0 }));
+    for (const row of rows) console.log(JSON.stringify(row));
+    return;
+  }
+  if (command === "cancel") {
+    const key = readKey();
+    if (!key) {
+      console.error("No API wallet key in the keychain. Run: voltjuice key set");
+      process.exit(1);
+    }
+    const oid = Number(flag("--oid"));
+    const market = flag("--market");
+    if (!market || !(oid > 0)) {
+      console.error("Pass --market and --oid.");
+      process.exit(1);
+    }
+    const markets = await loadMarkets();
+    const spot = await loadSpotMarkets();
+    const listed = [...markets, ...spot].find((row) => String(row.name).toUpperCase() === market.toUpperCase());
+    if (!listed) {
+      console.error("Unknown market.");
+      process.exit(1);
+    }
+    await cancelOrder(key, listed.asset ?? listed.index, oid);
+    console.log(JSON.stringify({ ok: true, oid }));
     return;
   }
   if (command === "order") return place(config);

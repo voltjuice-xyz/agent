@@ -39,6 +39,10 @@ test("a strategy order keeps book, margin, limit, and protection", () => {
   assert.equal(badTp.reason, "tp");
   const spot = planOrder({ book: "spot", side: "buy", type: "market", mark: 80000, szDecimals: 5, notional: 20, leverage: 3 });
   assert.equal(spot.reason, "spot-plain");
+  const stop = planOrder({ book: "perp", side: "buy", type: "stop-market", mark: 80000, trigger: 79000, szDecimals: 5, notional: 20 });
+  assert.equal(stop.reason, "trigger");
+  const twap = planOrder({ book: "perp", side: "buy", type: "twap", mark: 80000, szDecimals: 5, notional: 20 });
+  assert.equal(twap.reason, "twap");
 });
 
 test("split accounts with spot cash need a move, shared accounts do not", () => {

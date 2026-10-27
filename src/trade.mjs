@@ -54,6 +54,26 @@ export async function loadAccount(address) {
   };
 }
 
+export async function listOrders(address) {
+  const rows = await info().frontendOpenOrders({ user: address });
+  return (rows ?? []).map((row) => ({
+    oid: row.oid,
+    coin: row.coin,
+    side: row.side,
+    size: row.sz,
+    price: row.limitPx,
+  }));
+}
+
+export async function cancelOrder(privateKey, asset, oid) {
+  const client = new ExchangeClient({
+    transport: new HttpTransport({ isTestnet: false, timeout: 15_000 }),
+    wallet: new Wallet(privateKey),
+  });
+  await client.cancel({ cancels: [{ a: asset, o: Number(oid) }] });
+  return { ok: true };
+}
+
 export async function loadSpotMarkets() {
   const [meta, ctx] = await info().spotMetaAndAssetCtxs();
   return meta.universe
@@ -118,21 +138,48 @@ export async function sendOrder(privateKey, order) {
       leverage: order.leverage,
     });
   }
-  const orders = [
-    {
-      a: order.asset,
-      b: order.side === "buy",
-      p: order.price,
-      s: order.size,
-      r: Boolean(order.reduceOnly),
-      t: { limit: { tif: order.tif === "Gtc" ? "Gtc" : "Ioc" } },
-    },
-  ];
-  if (order.book !== "spot" && order.tp) orders.push(protectLeg(order.asset, order.side === "buy", order.size, order.tp, "tp"));
-  if (order.book !== "spot" && order.sl) orders.push(protectLeg(order.asset, order.side === "buy", order.size, order.sl, "sl"));
+  if (order.kind === "twap") {
+    const result = await client.twapOrder({
+      twap: {
+        a: order.asset,
+        b: order.side === "buy",
+        s: order.size,
+        r: Boolean(order.reduceOnly),
+        m: order.minutes || 30,
+        t: false,
+      },
+    });
+    const status = result?.response?.data?.status;
+    if (status && typeof status === "object" && status.error) return { ok: false, reason: scrub(status.error) };
+    return { ok: true };
+  }
+  const buy = order.side === "buy";
+  const orders = order.kind === "scale"
+    ? order.legs.map((leg) => ({
+        a: order.asset,
+        b: buy,
+        p: leg.p,
+        s: leg.s,
+        r: Boolean(order.reduceOnly),
+        t: { limit: { tif: "Gtc" } },
+      }))
+    : [
+        {
+          a: order.asset,
+          b: buy,
+          p: order.price,
+          s: order.size,
+          r: Boolean(order.reduceOnly),
+          t: order.kind === "trigger"
+            ? { trigger: { isMarket: order.isMarket !== false, triggerPx: order.trigger, tpsl: order.tpsl } }
+            : { limit: { tif: order.tif === "Gtc" ? "Gtc" : "Ioc" } },
+        },
+      ];
+  if (order.kind === "limit" && order.tp) orders.push(protectLeg(order.asset, buy, order.size, order.tp, "tp"));
+  if (order.kind === "limit" && order.sl) orders.push(protectLeg(order.asset, buy, order.size, order.sl, "sl"));
   const result = await client.order({
     orders,
-    grouping: orders.length > 1 ? "normalTpsl" : "na",
+    grouping: orders.length > 1 && order.kind === "limit" ? "normalTpsl" : "na",
     builder: { b: DESK_FEE_ADDRESS, f: DESK_FEE_TENTHS_BPS },
   });
   const statuses = result?.response?.data?.statuses ?? [];

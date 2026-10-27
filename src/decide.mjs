@@ -79,16 +79,36 @@ export function nextFromBalance(account, config) {
   return { next: ready ? "trade" : "cap", note };
 }
 
+const ORDER_TYPES = {
+  market: { kind: "limit", tif: "Ioc" },
+  limit: { kind: "limit", tif: "Gtc" },
+  "stop-market": { kind: "trigger", tpsl: "sl", isMarket: true },
+  "stop-limit": { kind: "trigger", tpsl: "sl", isMarket: false },
+  "tp-market": { kind: "trigger", tpsl: "tp", isMarket: true },
+  "tp-limit": { kind: "trigger", tpsl: "tp", isMarket: false },
+  scale: { kind: "scale" },
+  twap: { kind: "twap" },
+};
+
+function triggerSitsOk(side, tpsl, trigger, mark) {
+  const buy = side === "buy";
+  const above = tpsl === "sl" ? buy : !buy;
+  return above ? trigger > mark : trigger < mark;
+}
+
 /** Entry plus optional protection. Spot stays a plain order. */
 export function planOrder(input) {
   const book = input.book === "spot" ? "spot" : "perp";
   const side = input.side === "sell" ? "sell" : input.side === "buy" ? "buy" : "";
   if (!side) return { ok: false, reason: "side" };
-  const type = input.type === "limit" ? "limit" : "market";
+  const type = ORDER_TYPES[input.type] ? input.type : input.type ? "" : "market";
+  if (!type) return { ok: false, reason: "type" };
+  const spec = ORDER_TYPES[type];
   const mark = Number(input.mark);
   if (!(mark > 0)) return { ok: false, reason: "price" };
-  const hasProtect = Boolean(input.tp || input.sl || input.leverage || input.margin === "isolated");
-  if (book === "spot" && hasProtect) return { ok: false, reason: "spot-plain" };
+  if (book === "spot" && (spec.kind !== "limit" || input.tp || input.sl || input.leverage || input.margin === "isolated")) {
+    return { ok: false, reason: "spot-plain" };
+  }
   let leverage = null;
   let isCross = true;
   if (book === "perp") {
@@ -99,33 +119,69 @@ export function planOrder(input) {
       if (!leverage || (Number.isFinite(max) && max > 0 && leverage > max)) return { ok: false, reason: "leverage" };
     }
   }
+  const notional = Number(input.notional);
+  if (spec.kind === "twap" && notional < 100) return { ok: false, reason: "twap" };
   let price = null;
-  const tif = type === "limit" ? "Gtc" : "Ioc";
-  if (type === "limit") {
+  let trigger = "";
+  if (spec.kind === "trigger") {
+    const level = Number(input.trigger);
+    if (!(level > 0) || !triggerSitsOk(side, spec.tpsl, level, mark)) return { ok: false, reason: "trigger" };
+    trigger = toSignificantDigits(level);
+    if (spec.isMarket) price = limitPrice(level, side);
+    else if (!(Number(input.price) > 0)) return { ok: false, reason: "limit" };
+    else price = toSignificantDigits(Number(input.price));
+  } else if (type === "limit") {
     if (!(Number(input.price) > 0)) return { ok: false, reason: "limit" };
     price = toSignificantDigits(Number(input.price));
   } else {
     price = limitPrice(mark, side);
   }
   if (!price) return { ok: false, reason: "price" };
-  const size = floorSize(Number(input.notional) / mark, input.szDecimals);
+  const size = floorSize(notional / mark, input.szDecimals);
   if (!size) return { ok: false, reason: "size" };
   const tp = Number(input.tp);
   const sl = Number(input.sl);
-  if (tp > 0 && (side === "buy" ? !(tp > mark) : !(tp < mark))) return { ok: false, reason: "tp" };
-  if (sl > 0 && (side === "buy" ? !(sl < mark) : !(sl > mark))) return { ok: false, reason: "sl" };
+  if (spec.kind === "limit") {
+    if (tp > 0 && (side === "buy" ? !(tp > mark) : !(tp < mark))) return { ok: false, reason: "tp" };
+    if (sl > 0 && (side === "buy" ? !(sl < mark) : !(sl > mark))) return { ok: false, reason: "sl" };
+  }
+  const legs = [];
+  if (spec.kind === "scale") {
+    const start = Number(input.scaleFrom);
+    const end = Number(input.scaleTo);
+    const count = Math.round(Number(input.scaleCount));
+    if (!(start > 0) || !(end > 0) || count < 2 || count > 20) return { ok: false, reason: "scale" };
+    const qty = Number(size);
+    for (let i = 0; i < count; i += 1) {
+      const px = start + ((end - start) * i) / (count - 1);
+      const leg = floorSize(qty / count, input.szDecimals);
+      if (leg) legs.push({ p: toSignificantDigits(px), s: leg });
+    }
+    if (legs.length < 2) return { ok: false, reason: "scale" };
+  }
+  let minutes = 30;
+  if (spec.kind === "twap") {
+    const asked = Number(input.minutes);
+    minutes = Number.isFinite(asked) ? Math.min(1440, Math.max(5, Math.round(asked))) : 30;
+  }
   return {
     ok: true,
     book,
     side,
     type,
-    tif,
+    kind: spec.kind,
+    tif: spec.tif || "Ioc",
+    tpsl: spec.tpsl || "",
+    isMarket: spec.isMarket !== false,
     price,
+    trigger,
     size,
     isCross,
     leverage,
-    tp: tp > 0 ? toSignificantDigits(tp) : "",
-    sl: sl > 0 ? toSignificantDigits(sl) : "",
+    minutes,
+    legs,
+    tp: spec.kind === "limit" && tp > 0 ? toSignificantDigits(tp) : "",
+    sl: spec.kind === "limit" && sl > 0 ? toSignificantDigits(sl) : "",
   };
 }
 

@@ -22,7 +22,7 @@ Use this when they describe a situation: a coin, a price, a size, "buy the dip",
 Map their words onto one `voltjuice order`:
 
 - Coin and buy or sell come from their sentence. If size is missing, use 11 USDC or their cap, whichever is smaller, and tell them the number.
-- "At a price" or "if it falls to" is `--type limit --price`. "Now" or no price is `--type market`.
+- "At a price" or "if it falls to" is `--type limit --price`. "Now" or no price is `--type market`. A stop, a standalone take-profit, a ladder, TWAP, a chase, or a trailing stop is in `skills/orders/SKILL.md`. Use that file only for those words. Do not offer them first.
 - They said a coin spot purchase, or named no leverage: `--book spot` only when they said spot. Otherwise `--book perp`.
 - They did not mention margin or leverage: `--margin cross` and no leverage change. Do not ask.
 - They named a target or a pain level: `--tp` and `--sl` on a perp order. A long target is above the mark and the pain level is below. A short is the reverse. If the side is wrong, fix it and tell them in one sentence. Do not attach these to a spot order.
