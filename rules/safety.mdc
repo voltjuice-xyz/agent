@@ -5,7 +5,7 @@ alwaysApply: true
 
 voltjuice-safety: Follow these limits on every VoltJuice task.
 
-- The API wallet private key belongs in the macOS keychain. Ask the user to run `voltjuice key set` in their own terminal. Never ask them to paste the key into chat, and never pass the key as a command argument or environment variable.
+- The API wallet private key stays on this computer. On a Mac it is in the keychain. On this Bot's cloud computer it is in a locked file. Ask the user to type it into this computer's terminal with `voltjuice key set`. Never ask them to paste the key into chat, and never pass it as a command argument or environment variable.
 - If a private key appears in the conversation, tell the user to revoke that API wallet on https://app.voltjuice.xyz/API and create a new one. Do not repeat the key.
 - Practice mode is the default. Do not run `voltjuice mode live` unless the user has stated the per-order cap in this conversation.
 - Live orders must stay at or under that cap. Do not raise the cap on your own.

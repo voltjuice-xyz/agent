@@ -1,6 +1,6 @@
 # VoltJuice agent
 
-Local trading assistant for [VoltJuice](https://voltjuice.xyz). It installs in Cursor and Grok Bot. The API wallet key stays in the macOS keychain on this computer. VoltJuice does not receive the key, and the key cannot withdraw.
+Local trading assistant for [VoltJuice](https://voltjuice.xyz). It installs in Cursor and on a Grok Bot cloud computer. The API wallet key stays on that computer. VoltJuice does not receive the key, and the key cannot withdraw.
 
 Practice mode is the default. A practice order is saved on this computer and is not sent. Live orders are sent only after you set a per-order cap, and only up to that cap.
 
@@ -23,7 +23,7 @@ ln -s ~/voltjuice-agent ~/.cursor/plugins/local/voltjuice
 ## Connect
 
 1. Open [the API wallet page](https://app.voltjuice.xyz/API) and create an API wallet. The master wallet signs once. The page shows the private key once.
-2. Store the key in the keychain. Paste it into this prompt, not into a chat:
+2. On a Mac the key goes into the keychain. On a Grok Bot computer it goes into a locked file on that computer. Type it into that computer's terminal, not into a chat:
 
    ```bash
    voltjuice key set
@@ -64,7 +64,7 @@ voltjuice mode paper
 
 ## 繁體中文
 
-這是 VoltJuice 的本機交易助手。API 錢包私鑰只放在這台電腦的鑰匙圈，網站不會收到這把鑰匙，它也不能提款。
+這是 VoltJuice 的交易助手。API 錢包私鑰放在 Grok Bot 的雲端電腦，網站不會收到這把鑰匙，它也不能提款。手機關掉之後，由 Bot 的排程繼續執行。
 
 預設是模擬。模擬單只記在這台電腦。要下真單，先設定單筆上限，例如 `voltjuice mode live --cap 100`。超過上限的單會被拒絕。
 

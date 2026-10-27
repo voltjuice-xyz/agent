@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { Wallet } from "ethers";
 import { clampLeverage, decideOrder, isAddress, isPrivateKey, scrub } from "./decide.mjs";
-import { forgetKey, readKey, writeKey } from "./keychain.mjs";
+import { forgetKey, keyStoreName, readKey, writeKey } from "./keychain.mjs";
 import { readConfig, readPaper, recordPaper, setMaster, setMode } from "./store.mjs";
 import { loadAccount, loadMarkets, quoteOrder, sendOrder } from "./trade.mjs";
 
@@ -11,6 +11,7 @@ function help() {
   status
   key set
   key forget
+  doctor
   master 0x...
   mode paper
   mode live --cap 100
@@ -55,6 +56,7 @@ function printStatus() {
       cap: config.cap,
       master: config.master ? short(config.master) : "",
       key: key ? "present" : "absent",
+      store: keyStoreName(),
       signer,
     }),
   );
@@ -148,6 +150,10 @@ async function main() {
   if (command === "help" || command === "--help") return help();
   if (command === "status") return printStatus();
   if (command === "key" && process.argv[3] === "set") {
+    if (!process.stdin.isTTY && process.env.VOLTJUICE_TEST !== "1") {
+      console.error("Type the API wallet key in this computer's terminal. Do not paste it into the chat.");
+      process.exit(1);
+    }
     const saved = writeKey(await readStdin());
     console.log(saved ? "Key stored." : "That is not an API wallet key.");
     if (!saved) process.exit(1);
@@ -179,6 +185,28 @@ async function main() {
       process.exit(1);
     }
     console.log(`Live mode. Per-order cap ${next.cap} USDC.`);
+    return;
+  }
+  if (command === "doctor") {
+    const key = readKey();
+    const report = {
+      platform: process.platform,
+      store: keyStoreName(),
+      mode: config.mode,
+      cap: config.cap,
+      key: key ? "present" : "absent",
+      signer: key ? short(new Wallet(key).address) : "",
+    };
+    if (process.env.VOLTJUICE_OFFLINE === "1") {
+      console.log(JSON.stringify({ ...report, markets: "skipped" }));
+      return;
+    }
+    try {
+      const rows = await loadMarkets();
+      console.log(JSON.stringify({ ...report, markets: rows.length }));
+    } catch (error) {
+      console.log(JSON.stringify({ ...report, markets: scrub(error instanceof Error ? error.message : "unavailable") }));
+    }
     return;
   }
   if (command === "markets") {

@@ -1,26 +1,41 @@
 import { execFileSync } from "node:child_process";
 import { chmodSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
+import { dirname, join } from "node:path";
 import { isPrivateKey, scrub } from "./decide.mjs";
+import { homeDir } from "./store.mjs";
 
 const SERVICE = "voltjuice-agent";
 const ACCOUNT = "api-wallet";
 
-function testFile() {
-  if (process.env.VOLTJUICE_TEST !== "1") return "";
-  return process.env.VOLTJUICE_KEY_FILE || "";
+function filePath() {
+  if (process.env.VOLTJUICE_TEST === "1" && process.env.VOLTJUICE_KEY_FILE) return process.env.VOLTJUICE_KEY_FILE;
+  if (process.platform !== "darwin" || process.env.VOLTJUICE_STORE === "file") return join(homeDir(), "key");
+  return "";
+}
+
+export function keyStoreName() {
+  return filePath() ? "file" : "keychain";
+}
+
+function readFileKey(file) {
+  try {
+    const value = readFileSync(file, "utf8").trim();
+    return isPrivateKey(value) ? value : "";
+  } catch {
+    return "";
+  }
+}
+
+function writeFileKey(file, key) {
+  mkdirSync(dirname(file), { recursive: true, mode: 0o700 });
+  chmodSync(dirname(file), 0o700);
+  writeFileSync(file, `${key}\n`, { mode: 0o600 });
+  chmodSync(file, 0o600);
 }
 
 export function readKey() {
-  const file = testFile();
-  if (file) {
-    try {
-      const value = readFileSync(file, "utf8").trim();
-      return isPrivateKey(value) ? value : "";
-    } catch {
-      return "";
-    }
-  }
+  const file = filePath();
+  if (file) return readFileKey(file);
   try {
     const value = execFileSync(
       "security",
@@ -36,11 +51,9 @@ export function readKey() {
 export function writeKey(value) {
   const key = String(value ?? "").trim();
   if (!isPrivateKey(key)) return false;
-  const file = testFile();
+  const file = filePath();
   if (file) {
-    mkdirSync(dirname(file), { recursive: true });
-    writeFileSync(file, `${key}\n`, { mode: 0o600 });
-    chmodSync(file, 0o600);
+    writeFileKey(file, key);
     return true;
   }
   try {
@@ -56,7 +69,7 @@ export function writeKey(value) {
 }
 
 export function forgetKey() {
-  const file = testFile();
+  const file = filePath();
   if (file) {
     rmSync(file, { force: true });
     return;
