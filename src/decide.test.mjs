@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   clampLeverage,
   decideOrder,
+  nextFromBalance,
+  planOrder,
   findMarket,
   floorSize,
   isPrivateKey,
@@ -25,6 +27,25 @@ test("live stays inside the user cap", () => {
 test("shared accounts count spot USDC when contract equity is zero", () => {
   assert.equal(tradableUsd({ mode: "unifiedAccount", accountValue: "0", withdrawable: "0", spotUsdc: "17.94" }), 17.94);
   assert.equal(tradableUsd({ mode: "default", accountValue: "0", withdrawable: "0", spotUsdc: "17.94" }), 0);
+});
+
+test("a strategy order keeps book, margin, limit, and protection", () => {
+  const market = planOrder({ book: "perp", side: "buy", type: "market", mark: 80000, szDecimals: 5, notional: 20, maxLeverage: 40, leverage: 5, margin: "isolated", tp: 90000, sl: 70000 });
+  assert.equal(market.ok, true);
+  assert.equal(market.tif, "Ioc");
+  assert.equal(market.isCross, false);
+  assert.equal(market.leverage, 5);
+  const badTp = planOrder({ book: "perp", side: "buy", type: "limit", mark: 80000, price: 79000, szDecimals: 5, notional: 20, tp: 70000 });
+  assert.equal(badTp.reason, "tp");
+  const spot = planOrder({ book: "spot", side: "buy", type: "market", mark: 80000, szDecimals: 5, notional: 20, leverage: 3 });
+  assert.equal(spot.reason, "spot-plain");
+});
+
+test("split accounts with spot cash need a move, shared accounts do not", () => {
+  const split = nextFromBalance({ balance: "0", spotUsdc: "17.94", transfer: "split-only" }, { mode: "paper", cap: 0 });
+  assert.equal(split.next, "move");
+  const shared = nextFromBalance({ balance: "17.94", spotUsdc: "17.94", transfer: "never" }, { mode: "paper", cap: 0 });
+  assert.equal(shared.next, "cap");
 });
 
 test("orders below 11 are refused", () => {

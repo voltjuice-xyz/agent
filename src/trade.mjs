@@ -1,6 +1,6 @@
 import { ExchangeClient, HttpTransport, InfoClient } from "@nktkas/hyperliquid";
 import { Wallet } from "ethers";
-import { findMarket, floorSize, limitPrice, MIN_NOTIONAL, scrub, tradableUsd } from "./decide.mjs";
+import { findMarket, floorSize, limitPrice, MIN_NOTIONAL, scrub, toSignificantDigits, tradableUsd } from "./decide.mjs";
 
 const DESK_FEE_ADDRESS = "0xa9F943F44a8068273B0D4a2b6eaB529e2e2Ee483";
 const DESK_FEE_TENTHS_BPS = 15;
@@ -54,6 +54,39 @@ export async function loadAccount(address) {
   };
 }
 
+export async function loadSpotMarkets() {
+  const [meta, ctx] = await info().spotMetaAndAssetCtxs();
+  return meta.universe
+    .map((pair, position) => {
+      const index = Number.isInteger(pair.index) ? pair.index : position;
+      const base = meta.tokens.find((token) => token.index === pair.tokens[0]);
+      const quote = meta.tokens.find((token) => token.index === pair.tokens[1]);
+      const snap = ctx[position];
+      return {
+        name: base?.name ?? pair.name,
+        quote: quote?.name ?? "",
+        asset: 10_000 + index,
+        markPx: snap?.markPx ?? "0",
+        szDecimals: typeof base?.szDecimals === "number" ? base.szDecimals : 2,
+        maxLeverage: 1,
+      };
+    })
+    .filter((row) => row.quote === "USDC" && Number(row.markPx) > 0 && row.asset > 0);
+}
+
+function protectLeg(asset, entryBuy, size, trigger, tpsl) {
+  const closeBuy = !entryBuy;
+  const limit = Number(trigger) * (closeBuy ? 1.005 : 0.995);
+  return {
+    a: asset,
+    b: closeBuy,
+    p: toSignificantDigits(limit),
+    s: size,
+    r: true,
+    t: { trigger: { isMarket: true, triggerPx: trigger, tpsl } },
+  };
+}
+
 export function quoteOrder(markets, input) {
   const market = findMarket(markets, input.market);
   if (!market) return { ok: false, reason: "market" };
@@ -73,26 +106,33 @@ export function quoteOrder(markets, input) {
   };
 }
 
-export async function sendOrder(privateKey, order, leverage) {
+export async function sendOrder(privateKey, order) {
   const client = new ExchangeClient({
     transport: new HttpTransport({ isTestnet: false, timeout: 15_000 }),
     wallet: new Wallet(privateKey),
   });
-  if (leverage) {
-    await client.updateLeverage({ asset: order.asset, isCross: true, leverage });
+  if (order.book !== "spot" && order.leverage) {
+    await client.updateLeverage({
+      asset: order.asset,
+      isCross: order.isCross !== false,
+      leverage: order.leverage,
+    });
   }
+  const orders = [
+    {
+      a: order.asset,
+      b: order.side === "buy",
+      p: order.price,
+      s: order.size,
+      r: Boolean(order.reduceOnly),
+      t: { limit: { tif: order.tif === "Gtc" ? "Gtc" : "Ioc" } },
+    },
+  ];
+  if (order.book !== "spot" && order.tp) orders.push(protectLeg(order.asset, order.side === "buy", order.size, order.tp, "tp"));
+  if (order.book !== "spot" && order.sl) orders.push(protectLeg(order.asset, order.side === "buy", order.size, order.sl, "sl"));
   const result = await client.order({
-    orders: [
-      {
-        a: order.asset,
-        b: order.side === "buy",
-        p: order.price,
-        s: order.size,
-        r: order.reduceOnly,
-        t: { limit: { tif: "Ioc" } },
-      },
-    ],
-    grouping: "na",
+    orders,
+    grouping: orders.length > 1 ? "normalTpsl" : "na",
     builder: { b: DESK_FEE_ADDRESS, f: DESK_FEE_TENTHS_BPS },
   });
   const statuses = result?.response?.data?.statuses ?? [];

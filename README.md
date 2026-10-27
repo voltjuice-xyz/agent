@@ -67,6 +67,25 @@ voltjuice order --market BTC --side buy --notional 20
 
 There is no withdraw, transfer, or spot-to-contract command. `--leverage` is optional and limited to 1–20. To close, use the opposite side and `--reduce-only`.
 
+## Strategy, not a single buy
+
+An automatic strategy repeats. Before saving one, write every choice into the routine text:
+
+- Book: `perp` or `spot`. Spot spends the coin balance. Perp spends the tradable USDC.
+- Account mode is already on the master. You cannot switch unified, manual, or portfolio margin. The user does that on the site. Read `accountMode` and follow it.
+- `unifiedAccount` and `portfolioMargin`: one balance. `transfer` is `never`.
+- `default` and `disabled`: spot and contract are separate. If `next` is `move`, stop and ask the user to move USDC to the contract balance on the site.
+- Perp margin is `cross` unless the user asked for `isolated`. Portfolio margin stays `cross` unless they asked otherwise.
+- Leverage is 1–20 and only on perp. It changes the whole position.
+- Order type is `market` or `limit`. A limit needs `--price`. Do not turn a limit strategy into a market order.
+- Take-profit and stop-loss are `--tp` and `--sl` on a perp order. A long protects above and below the mark. A short is the other way. Spot has no contract protection.
+- Each run reads `voltjuice account` first, then sends at or under the cap. Do not raise the cap. Do not retry a refused order larger.
+
+```bash
+voltjuice order --book perp --market BTC --side buy --notional 20 --type limit --price 79000 --margin isolated --leverage 3 --tp 85000 --sl 76000
+voltjuice order --book spot --market HYPE --side buy --notional 20 --type market
+```
+
 ## 繁體中文
 
 你帶用家由第一句去到第一張真單。用家唔使打指令。

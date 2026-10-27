@@ -3,10 +3,10 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { Wallet } from "ethers";
-import { clampLeverage, decideOrder, isAddress, isPrivateKey, MIN_NOTIONAL, scrub } from "./decide.mjs";
+import { decideOrder, isAddress, isPrivateKey, MIN_NOTIONAL, nextFromBalance, planOrder, scrub } from "./decide.mjs";
 import { forgetKey, keyStoreName, readKey, writeKey } from "./keychain.mjs";
 import { readConfig, readPaper, recordPaper, setMaster, setMode } from "./store.mjs";
-import { loadAccount, loadMarkets, quoteOrder, sendOrder } from "./trade.mjs";
+import { loadAccount, loadMarkets, loadSpotMarkets, sendOrder } from "./trade.mjs";
 
 function help() {
   console.log(`voltjuice
@@ -22,7 +22,7 @@ function help() {
   markets
   account
   paper
-  order --market BTC --side buy --notional 20 [--reduce-only] [--leverage 5]
+  order --market BTC --side buy --notional 20 [--book perp|spot] [--type market|limit --price 80000] [--margin cross|isolated] [--leverage 5] [--tp 90000] [--sl 70000] [--reduce-only]
 
 Practice mode is the default. The API wallet key stays in the keychain and cannot withdraw.`);
 }
@@ -139,13 +139,9 @@ async function printNext(config) {
     report.canTrade = account.canTrade;
     report.transfer = account.transfer;
     report.accountValue = account.balance;
-    if (!(Number(account.balance) > 0)) {
-      report.next = "funds";
-      report.note = "Tradable balance is 0. Ask for a deposit. Do not move funds to the API wallet address.";
-    } else {
-      report.next = ready ? "trade" : "cap";
-      report.note = "Tell the user the balance field. Contract equity 0 is normal on a shared account. Do not transfer and do not say the balance is 0.";
-    }
+    const step = nextFromBalance(account, config);
+    report.next = step.next;
+    report.note = step.note;
   } catch (error) {
     report.next = "account";
     report.accountValue = scrub(error instanceof Error ? error.message : "unavailable");
@@ -160,12 +156,10 @@ async function place(config) {
     console.error("Pass --side buy or --side sell.");
     process.exit(1);
   }
-  const leverage = flag("--leverage") ? clampLeverage(flag("--leverage")) : null;
-  if (flag("--leverage") && !leverage) {
-    console.error("Leverage must be from 1 to 20.");
-    process.exit(1);
-  }
   const reduceOnly = has("--reduce-only");
+  const book = flag("--book") === "spot" ? "spot" : "perp";
+  const orderType = flag("--type") === "limit" ? "limit" : "market";
+  const margin = flag("--margin") === "isolated" ? "isolated" : "cross";
   let notional = Number(flag("--notional"));
   if (reduceOnly && !flag("--notional")) {
     if (!config.master) {
@@ -186,7 +180,7 @@ async function place(config) {
     }
     notional = Math.abs(position.value);
   }
-  const decision = decideOrder({ mode: config.mode, cap: config.cap, notional });
+  const decision = decideOrder({ mode: config.mode, cap: config.cap, notional, reduceOnly });
   if (!decision.ok) {
     const message = {
       small: "The smallest order is 11 USDC.",
@@ -201,12 +195,41 @@ async function place(config) {
     console.log(JSON.stringify({ ok: true, route: "paper", market, side, notional }));
     return;
   }
-  const markets = await loadMarkets();
-  const quote = quoteOrder(markets, { market, side, notional, reduceOnly });
-  if (!quote.ok) {
-    console.error(quote.reason === "market" ? "Unknown market." : "The size is too small.");
+  const markets = book === "spot" ? await loadSpotMarkets() : await loadMarkets();
+  const listed = markets.find((row) => String(row.name).toUpperCase() === market.toUpperCase());
+  if (!listed) {
+    console.error("Unknown market.");
     process.exit(1);
   }
+  const plan = planOrder({
+    book,
+    side,
+    type: orderType,
+    mark: listed.markPx,
+    szDecimals: listed.szDecimals,
+    maxLeverage: listed.maxLeverage,
+    price: flag("--price"),
+    margin,
+    leverage: flag("--leverage"),
+    tp: flag("--tp"),
+    sl: flag("--sl"),
+    notional,
+  });
+  if (!plan.ok) {
+    const message = {
+      side: "Pass --side buy or --side sell.",
+      "spot-plain": "Spot orders do not take leverage, isolated margin, or contract protection.",
+      leverage: "Leverage must be from 1 to 20 and within that market.",
+      limit: "A limit order needs --price.",
+      tp: "Take-profit is on the wrong side of the mark.",
+      sl: "Stop-loss is on the wrong side of the mark.",
+      size: "The size is too small.",
+      price: "No price for that market.",
+    }[plan.reason];
+    console.error(message || "Order was not accepted.");
+    process.exit(1);
+  }
+  const quote = { ...plan, market: listed.name, asset: listed.asset ?? listed.index, notional, reduceOnly };
   if (decision.route === "paper") {
     recordPaper({ at: new Date().toISOString(), ...quote });
     console.log(JSON.stringify({ ok: true, route: "paper", market: quote.market, side, size: quote.size, price: quote.price }));
@@ -217,7 +240,7 @@ async function place(config) {
     console.error("No API wallet key in the keychain. Run: voltjuice key set");
     process.exit(1);
   }
-  const sent = await sendOrder(key, quote, leverage);
+  const sent = await sendOrder(key, quote);
   if (!sent.ok) {
     console.error(sent.reason || "Order was not accepted.");
     process.exit(1);

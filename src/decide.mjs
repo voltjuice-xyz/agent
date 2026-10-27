@@ -60,10 +60,80 @@ export function tradableUsd(input) {
   return withdrawable > 0 ? withdrawable : equity;
 }
 
+/** What `voltjuice next` should do after a balance read. */
+export function nextFromBalance(account, config) {
+  const ready = config.mode === "live" && Number(config.cap) >= MIN_NOTIONAL;
+  const note = "Tell the user the balance field. Contract equity 0 is normal on a shared account. Do not transfer and do not say the balance is 0.";
+  if (!(Number(account.balance) > 0)) {
+    if (account.transfer === "split-only" && Number(account.spotUsdc) > 0) {
+      return {
+        next: "move",
+        note: "Spot and contract balances are separate. Ask the user to move USDC into the contract balance on the site. Do not send it to the API wallet.",
+      };
+    }
+    return {
+      next: "funds",
+      note: "Tradable balance is 0. Ask for a deposit. Do not move funds to the API wallet address.",
+    };
+  }
+  return { next: ready ? "trade" : "cap", note };
+}
+
+/** Entry plus optional protection. Spot stays a plain order. */
+export function planOrder(input) {
+  const book = input.book === "spot" ? "spot" : "perp";
+  const side = input.side === "sell" ? "sell" : input.side === "buy" ? "buy" : "";
+  if (!side) return { ok: false, reason: "side" };
+  const type = input.type === "limit" ? "limit" : "market";
+  const mark = Number(input.mark);
+  if (!(mark > 0)) return { ok: false, reason: "price" };
+  const hasProtect = Boolean(input.tp || input.sl || input.leverage || input.margin === "isolated");
+  if (book === "spot" && hasProtect) return { ok: false, reason: "spot-plain" };
+  let leverage = null;
+  let isCross = true;
+  if (book === "perp") {
+    isCross = input.margin !== "isolated";
+    if (input.leverage) {
+      leverage = clampLeverage(input.leverage);
+      const max = Number(input.maxLeverage);
+      if (!leverage || (Number.isFinite(max) && max > 0 && leverage > max)) return { ok: false, reason: "leverage" };
+    }
+  }
+  let price = null;
+  const tif = type === "limit" ? "Gtc" : "Ioc";
+  if (type === "limit") {
+    if (!(Number(input.price) > 0)) return { ok: false, reason: "limit" };
+    price = toSignificantDigits(Number(input.price));
+  } else {
+    price = limitPrice(mark, side);
+  }
+  if (!price) return { ok: false, reason: "price" };
+  const size = floorSize(Number(input.notional) / mark, input.szDecimals);
+  if (!size) return { ok: false, reason: "size" };
+  const tp = Number(input.tp);
+  const sl = Number(input.sl);
+  if (tp > 0 && (side === "buy" ? !(tp > mark) : !(tp < mark))) return { ok: false, reason: "tp" };
+  if (sl > 0 && (side === "buy" ? !(sl < mark) : !(sl > mark))) return { ok: false, reason: "sl" };
+  return {
+    ok: true,
+    book,
+    side,
+    type,
+    tif,
+    price,
+    size,
+    isCross,
+    leverage,
+    tp: tp > 0 ? toSignificantDigits(tp) : "",
+    sl: sl > 0 ? toSignificantDigits(sl) : "",
+  };
+}
+
 /** Practice is the default. Live requires a user cap and stays inside it. */
 export function decideOrder(input) {
   const notional = Number(input.notional);
-  if (!Number.isFinite(notional) || notional < MIN_NOTIONAL) return { ok: false, reason: "small" };
+  if (!Number.isFinite(notional) || notional <= 0) return { ok: false, reason: "small" };
+  if (!input.reduceOnly && notional < MIN_NOTIONAL) return { ok: false, reason: "small" };
   if (input.mode !== "live") return { ok: true, route: "paper" };
   const cap = Number(input.cap);
   if (!Number.isFinite(cap) || cap < MIN_NOTIONAL || cap > MAX_CAP) return { ok: false, reason: "cap" };
