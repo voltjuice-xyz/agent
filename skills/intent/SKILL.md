@@ -11,7 +11,7 @@ Finish `voltjuice next` until `next` is `trade` before sending anything. The bal
 
 When the account can trade, ask once, in their language:
 
-「你想我而家幫你落一張單，定係手機關咗都 24 小時照跑？你用自己的講法講想點買就得。」
+「你想現在下一張單，還是手機關閉後仍 24 小時自動執行？用你自己的說法說明想怎麼買即可。」
 
 Skip the question when they already said which one.
 
@@ -28,7 +28,7 @@ Map their words onto one `voltjuice order`:
 - They named a target or a pain level: `--tp` and `--sl` on a perp order. A long target is above the mark and the pain level is below. A short is the reverse. If the side is wrong, fix it and tell them in one sentence. Do not attach these to a spot order.
 - Read `accountMode`. Shared accounts (`unifiedAccount`, `portfolioMargin`) never move funds. Split accounts (`default`, `disabled`) stop on `next` of `move`.
 
-Say the order back in one sentence, then send it if they already asked you to do it. Ask "落唔落" only when the sentence was ambiguous.
+Say the order back in one sentence, then send it if they already asked you to do it. Ask whether to place it only when the sentence was ambiguous. Chinese replies use written Traditional Chinese.
 
 ## Always on
 
@@ -44,6 +44,6 @@ Propose one complete plan. Do not offer a menu of indicators. Fill every blank y
 
 Then one question only:
 
-「就用全倉 3 倍、市價、止盈大約 8%、止損大約 4%。有倉就唔再加。你想改槓桿，定係就咁用？」
+「就用全倉 3 倍、市價、止盈約 8%、止損約 4%。已有倉位就不再加倉。你想改槓桿，還是就用這套？」
 
 A number from 1 to 20 replaces only the leverage. Any other change replaces only that one piece. When they accept, save the routine from the routine skill. Repeat the finished plan in plain language before the first live run.
