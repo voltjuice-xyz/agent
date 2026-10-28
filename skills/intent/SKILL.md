@@ -38,7 +38,7 @@ Propose one complete plan. Do not offer a menu of indicators. Fill every blank y
 
 - Perp, cross margin, leverage 3. Say that 3x is the cautious default and isolated is only if they later ask for a separate position.
 - Market entry. Size is the smaller of their cap and one fifth of `balance`, and at least 11 USDC.
-- Take-profit about 8% past the mark, stop about 4% the other way. Long or short follows what they said. If they did not say a direction, use long and say so.
+- Take-profit about 8% past the mark, stop about 4% the other way. Long is `--side buy`. Short is `--side sell`. Use the direction they named, and repeat that word before the first order. If they did not say a direction, use long and say so. Never open the opposite side.
 - Each run: if that position is already open, do nothing. If not, send that one order. Never add a second position, and never raise the cap.
 - Shared balance stays where it is. The API wallet address receives nothing.
 
