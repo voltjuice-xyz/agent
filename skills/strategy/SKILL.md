@@ -7,6 +7,8 @@ description: Run one slow dip-buy cycle. Use when the user wants prices to fall 
 
 This is one buy, then extra buys only after the price falls, then one close when the average is up. It is not a grid, and it is not a check every few seconds.
 
+Run it only inside one sub-account, with one API wallet, and use that key only for that sub-account address. Two API wallets on the master are two keys for one balance. They are not a place to run this. If a sub-account cannot be created, show the plan and stop. Do not place the cycle on the master account. Read positions only from the sub-account. Do not cancel or close an order that is not part of this cycle.
+
 A wake is a full run. Use 15, 30, or 60 minutes. A daily buy uses one wake a day. Do not schedule every 5 minutes just to look at the price.
 
 Each wake does this and then stops:

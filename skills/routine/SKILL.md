@@ -23,7 +23,7 @@ Shared accounts never move funds between spot and contract. Split accounts stop 
 
 Each run reads `voltjuice account`, then sends one order inside the cap. A refused order is not retried larger. Close with the opposite side and `--reduce-only`. The text must not contain the key.
 
-A dip-buy cycle is `skills/strategy/SKILL.md`. It wakes every 15, 30, or 60 minutes and runs `voltjuice strategy tick` once. Do not poll every 5 minutes.
+A dip-buy cycle is `skills/strategy/SKILL.md`. It wakes every 15, 30, or 60 minutes and runs `voltjuice strategy tick` once. Do not poll every 5 minutes. Run that cycle only in its own sub-account. Do not run it on the master account.
 
 Pause with `voltjuice mode paper` or by turning the routine off.
 

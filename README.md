@@ -24,6 +24,16 @@ If `contractEquity` is `"0"` and `balance` is above 0, say the balance is `balan
 
 If `reason` is `key-address`, you saved the API wallet address. Ask for the Master address on the API page and run `voltjuice master` again.
 
+## Keys and boxes
+
+Two API wallets are two keys for one account. They share one balance, one position, and one liquidation price. They are not two accounts. A second key exists so two programs can sign at the same time. Each key has its own order sequence. Using one key from two programs makes orders fail.
+
+A master account starts with 3 named key slots. One name is reserved for this desk, so the API page shows 2 for the user. Each sub-account adds 2 slots. A slot is another key, not another balance. The same name replaces the old key.
+
+A sub-account is a separate address with its own margin, positions, and liquidation price. Creating one needs $100,000 of lifetime volume. After that the user can open up to 10. Every extra $100,000,000 of volume adds one, up to 50. Creating one and moving funds both need the master wallet's signature. A sub-account has no key of its own.
+
+A repeating strategy runs only in its own sub-account, with one key, and that key is used only with that sub-account address. Do not run it on the master account. Do not read the master's positions as the strategy's positions. Do not cancel or close an order that does not belong to that strategy. If a sub-account cannot be created, show the plan and stop. Several master accounts are the user's own choice. Still keep each strategy in its own sub-account.
+
 ## Path
 
 1. Install once, then `voltjuice doctor` and `voltjuice markets`. Show those prices. Do not invent them.
