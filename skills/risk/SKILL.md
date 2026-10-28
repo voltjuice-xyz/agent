@@ -12,9 +12,11 @@ The API wallet cannot withdraw, transfer, or move margin. Do not look for a way 
 1. `voltjuice next` says `trade`, and `canTrade` is true.
 2. The size is at least 11 USDC and not above the cap.
 3. Say the order back in one sentence.
-4. Default is perp, cross margin, and no leverage change. Isolated margin, leverage, stops, scale, and TWAP come from `skills/orders/SKILL.md` only when the user's words need them.
+4. If `voltjuice next` includes `manual`, this is a hand order on an account that already has a strategy. Say that warning in the user's language and wait for a yes. Only then repeat the order with `--share`. Do not add `--share` yourself. A wake that is carrying out `strategy tick` uses `--from-strategy` and does not ask again.
 
-A 24-hour routine uses the same checks on every run. If `balance` cannot cover the order, skip the run and tell them. Do not shrink the cap and do not borrow size from somewhere else.
+5. Default is perp, cross margin, and no leverage change. Isolated margin, leverage, stops, scale, and TWAP come from `skills/orders/SKILL.md` only when the user's words need them.
+
+A 24-hour routine uses the size and cap checks on every run, and sends with `--from-strategy`. It does not ask about the shared account again. If `balance` cannot cover the order, skip the run and tell them. Do not shrink the cap and do not borrow size from somewhere else.
 
 ## When they say stop
 

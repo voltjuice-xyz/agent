@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { Wallet } from "ethers";
 import { decideOrder, isAddress, isPrivateKey, MAX_CAP, MIN_NOTIONAL, nextFromBalance, planOrder, scrub } from "./decide.mjs";
-import { applyFill, holdForBox, planDcaTick, readStrategy, writeStrategy } from "./strategy.mjs";
+import { applyFill, gridQuote, holdForBox, manualShare, planStrategyTick, readStrategy, strategyFromPlan, writeStrategy } from "./strategy.mjs";
 import { forgetKey, keyStoreName, readKey, writeKey } from "./keychain.mjs";
 import { readConfig, readPaper, recordPaper, setMaster, setMode } from "./store.mjs";
 import { cancelOrder, listOrders, loadAccount, loadMarkets, loadSpotMarkets, sendOrder } from "./trade.mjs";
@@ -23,10 +23,10 @@ function help() {
   markets
   account
   paper
-  order --market BTC --side buy --notional 20 [--book perp|spot] [--type market|limit|stop-market|stop-limit|tp-market|tp-limit|scale|twap] [--price 80000] [--trigger 81000] [--scale-from 78000 --scale-to 76000 --scale-count 5] [--minutes 30] [--margin cross|isolated] [--leverage 5] [--tp 90000] [--sl 70000] [--reduce-only]
+  order --market BTC --side buy --notional 20 [--book perp|spot] [--type market|limit|stop-market|stop-limit|tp-market|tp-limit|scale|twap] [--price 80000] [--trigger 81000] [--scale-from 78000 --scale-to 76000 --scale-count 5] [--minutes 30] [--margin cross|isolated] [--leverage 5] [--tp 90000] [--sl 70000] [--reduce-only] [--share] [--from-strategy]
   orders
   cancel --market BTC --oid 123
-  strategy set|show|box|tick|note
+  strategy set|show|box|tick|note|quote|import|pull
 
 Practice mode is the default. The API wallet key stays in the keychain and cannot withdraw.`);
 }
@@ -131,6 +131,8 @@ async function printNext(config) {
   const ready = config.mode === "live" && config.cap >= MIN_NOTIONAL;
   if (process.env.VOLTJUICE_OFFLINE === "1") {
     report.next = ready ? "trade" : "cap";
+    const share = manualShare(readStrategy(), config.master);
+    if (share) report.manual = share.detail;
     console.log(JSON.stringify(report));
     return;
   }
@@ -146,6 +148,8 @@ async function printNext(config) {
     const step = nextFromBalance(account, config);
     report.next = step.next;
     report.note = step.note;
+    const share = manualShare(readStrategy(), config.master);
+    if (share) report.manual = share.detail;
   } catch (error) {
     report.next = "account";
     report.accountValue = scrub(error instanceof Error ? error.message : "unavailable");
@@ -194,9 +198,17 @@ async function place(config) {
     console.error(message);
     process.exit(1);
   }
+  const share = manualShare(readStrategy(), config.master);
+  const hand = Boolean(share) && !has("--from-strategy");
+  if (hand && decision.route === "live" && !has("--share")) {
+    console.error(share.detail);
+    console.error("Ask the user before this manual order. After they accept, repeat it with --share. A strategy wake uses --from-strategy.");
+    process.exit(2);
+  }
+  const shared = hand ? { warn: "shared", account: "master" } : {};
   if (process.env.VOLTJUICE_OFFLINE === "1") {
     recordPaper({ at: new Date().toISOString(), market, side, notional, reduceOnly, offline: true });
-    console.log(JSON.stringify({ ok: true, route: "paper", market, side, notional }));
+    console.log(JSON.stringify({ ok: true, route: "paper", market, side, notional, ...shared }));
     return;
   }
   const markets = book === "spot" ? await loadSpotMarkets() : await loadMarkets();
@@ -245,7 +257,7 @@ async function place(config) {
   const quote = { ...plan, market: listed.name, asset: listed.asset ?? listed.index, notional, reduceOnly };
   if (decision.route === "paper") {
     recordPaper({ at: new Date().toISOString(), ...quote });
-    console.log(JSON.stringify({ ok: true, route: "paper", market: quote.market, side, size: quote.size, price: quote.price }));
+    console.log(JSON.stringify({ ok: true, route: "paper", market: quote.market, side, size: quote.size, price: quote.price, ...shared }));
     return;
   }
   const key = readKey();
@@ -258,10 +270,45 @@ async function place(config) {
     console.error(sent.reason || "Order was not accepted.");
     process.exit(1);
   }
-  console.log(JSON.stringify({ ok: true, route: "live", market: quote.market, side, size: quote.size, price: quote.price }));
+  console.log(JSON.stringify({ ok: true, route: "live", market: quote.market, side, size: quote.size, price: quote.price, ...shared }));
 }
 
-function runStrategy(config) {
+function tickHoldings() {
+  const raw = flag("--holdings");
+  if (!raw) return [];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+async function pullDeskStrategy(config) {
+  const user = String(flag("--user") || config.master || "").trim().toLowerCase();
+  if (!isAddress(user)) {
+    console.error("Set the master address first.");
+    process.exit(1);
+  }
+  const site = String(flag("--site") || "https://app.voltjuice.xyz").replace(/\/$/, "");
+  const url = new URL("/api/bots", site);
+  url.searchParams.set("user", user);
+  const res = await fetch(url, { headers: { origin: site, accept: "application/json" } });
+  if (!res.ok) {
+    console.error("The desk did not return a strategy.");
+    process.exit(1);
+  }
+  const body = await res.json();
+  const rows = Array.isArray(body.rows) ? body.rows : [];
+  const live = rows.find((row) => row && row.status === "saved") ?? rows[0];
+  if (!live) {
+    console.error("No strategy on the desk for that address.");
+    process.exit(1);
+  }
+  console.log(JSON.stringify(writeStrategy(strategyFromPlan(live, readStrategy()))));
+}
+
+async function runStrategy(config) {
   const sub = process.argv[3] ?? "";
   if (sub === "show") {
     console.log(JSON.stringify(readStrategy()));
@@ -277,6 +324,7 @@ function runStrategy(config) {
       maxAdds: Math.floor(Number(flag("--max-adds") || current.maxAdds)),
       stepPct: Number(flag("--step") || current.stepPct),
       tpPct: Number(flag("--tp") || current.tpPct),
+      status: "saved",
     });
     console.log(JSON.stringify(next));
     return;
@@ -286,8 +334,18 @@ function runStrategy(config) {
     const book = has("--flat") ? { ...saved, open: false, adds: 0, last: 0, avg: 0, spent: 0 } : saved;
     if (has("--flat") && saved.open) writeStrategy(book);
     const cap = config.mode === "live" ? config.cap : MAX_CAP;
+    const pnl = flag("--pnl");
+    const roi = flag("--roi");
     console.log(JSON.stringify(holdForBox(
-      planDcaTick({ ...book, mark: flag("--mark"), cap, balance: flag("--balance") }),
+      planStrategyTick({
+        ...book,
+        mark: flag("--mark"),
+        cap,
+        balance: flag("--balance"),
+        holdings: tickHoldings(),
+        pnl: pnl === "" ? undefined : Number(pnl),
+        roi: roi === "" ? undefined : Number(roi),
+      }),
       book.box,
       config.master,
     )));
@@ -295,8 +353,13 @@ function runStrategy(config) {
   }
   if (sub === "box") {
     const address = String(process.argv[4] ?? flag("--address")).trim().toLowerCase();
-    if (!isAddress(address) || (config.master && address === config.master)) {
-      console.error("Pass a sub-account address. It cannot be the master address.");
+    const master = String(config.master ?? "").trim().toLowerCase();
+    if (address === "master" || address === "clear" || (master && address === master)) {
+      console.log(JSON.stringify(writeStrategy({ ...readStrategy(), box: "" })));
+      return;
+    }
+    if (!isAddress(address)) {
+      console.error("Pass a sub-account address, or master to use the master account.");
       process.exit(1);
     }
     console.log(JSON.stringify(writeStrategy({ ...readStrategy(), box: address })));
@@ -305,13 +368,34 @@ function runStrategy(config) {
   if (sub === "note") {
     const next = applyFill(readStrategy(), flag("--action"), flag("--price"));
     if (!next) {
-      console.error("Pass --action open, add, or close. Open and add also need --price.");
+      console.error("Pass --action open, add, close, grid, or rebalance. Open, add, grid, and rebalance also need --price.");
       process.exit(1);
     }
     console.log(JSON.stringify(writeStrategy(next)));
     return;
   }
-  console.error("Use strategy show, set, box, tick, or note.");
+  if (sub === "quote") {
+    console.log(JSON.stringify(gridQuote({
+      lower: flag("--lower"),
+      upper: flag("--upper"),
+      levels: flag("--levels"),
+      mode: flag("--mode") || "arithmetic",
+      book: flag("--book") || "perp",
+    })));
+    return;
+  }
+  if (sub === "import") {
+    const file = flag("--file");
+    if (!file) {
+      console.error("Pass --file.");
+      process.exit(1);
+    }
+    const plan = JSON.parse(readFileSync(file, "utf8"));
+    console.log(JSON.stringify(writeStrategy(strategyFromPlan(plan, readStrategy()))));
+    return;
+  }
+  if (sub === "pull") return pullDeskStrategy(config);
+  console.error("Use strategy show, set, box, tick, note, quote, import, or pull.");
   process.exit(1);
 }
 

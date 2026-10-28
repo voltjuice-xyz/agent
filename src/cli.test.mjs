@@ -42,6 +42,21 @@ test("practice order is recorded and the key is not printed", () => {
   assert.match(order.stdout, /"route":"paper"/);
 });
 
+test("a manual live order waits when a strategy is already running on the master", () => {
+  const home = mkdtempSync(join(tmpdir(), "vj-"));
+  assert.equal(run(["strategy", "set", "--market", "BTC", "--base", "11", "--add", "11", "--max-adds", "3", "--step", "1", "--tp", "1.5"], { home }).status, 0);
+  assert.equal(run(["mode", "live", "--cap", "20"], { home }).status, 0);
+  const blocked = run(["order", "--market", "BTC", "--side", "buy", "--notional", "12"], { home });
+  assert.equal(blocked.status, 2);
+  assert.match(blocked.stderr, /strategy is running on this account/);
+  const accepted = run(["order", "--market", "BTC", "--side", "buy", "--notional", "12", "--share"], { home });
+  assert.equal(accepted.status, 0);
+  assert.match(accepted.stdout, /"warn":"shared"/);
+  const wake = run(["order", "--market", "BTC", "--side", "buy", "--notional", "12", "--from-strategy"], { home });
+  assert.equal(wake.status, 0);
+  assert.equal(wake.stdout.includes("warn"), false);
+});
+
 test("live refuses an order above the cap before sending it", () => {
   const home = mkdtempSync(join(tmpdir(), "vj-"));
   const mode = run(["mode", "live", "--cap", "100"], { home });
@@ -128,7 +143,7 @@ function textFiles(dir) {
   return out;
 }
 
-test("a strategy tick waits until it has its own sub-account", () => {
+test("a strategy tick runs on the master account once that address is set", () => {
   const home = mkdtempSync(join(tmpdir(), "vj-"));
   const set = run(["strategy", "set", "--market", "BTC", "--base", "11", "--add", "11", "--max-adds", "3", "--step", "1", "--tp", "1.5"], { home });
   assert.equal(set.status, 0);
@@ -139,10 +154,14 @@ test("a strategy tick waits until it has its own sub-account", () => {
   const master = "0x1111111111111111111111111111111111111111";
   const box = "0x2222222222222222222222222222222222222222";
   assert.equal(run(["master", master], { home }).status, 0);
-  assert.equal(run(["strategy", "box", master], { home }).status, 1);
+  const onMaster = run(["strategy", "tick", "--mark", "80000", "--balance", "40", "--flat"], { home });
+  assert.match(onMaster.stdout, /"action":"open"/);
+  assert.match(onMaster.stdout, new RegExp(`"account":"${master}"`));
+  assert.equal(run(["strategy", "box", master], { home }).status, 0);
   assert.equal(run(["strategy", "box", box], { home }).status, 0);
   const tick = run(["strategy", "tick", "--mark", "80000", "--balance", "40", "--flat"], { home });
   assert.match(tick.stdout, /"action":"open"/);
+  assert.match(tick.stdout, new RegExp(`"account":"${box}"`));
   assert.equal(tick.stdout.includes("route"), false);
 });
 

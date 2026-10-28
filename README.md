@@ -32,7 +32,7 @@ A master account starts with 3 named key slots. One name is reserved for this de
 
 A sub-account is a separate address with its own margin, positions, and liquidation price. Creating one needs $100,000 of lifetime volume. After that the user can open up to 10. Every extra $100,000,000 of volume adds one, up to 50. Creating one and moving funds both need the master wallet's signature. A sub-account has no key of its own.
 
-A repeating strategy runs only in its own sub-account, with one key, and that key is used only with that sub-account address. Do not run it on the master account. Do not read the master's positions as the strategy's positions. Do not cancel or close an order that does not belong to that strategy. If a sub-account cannot be created, show the plan and stop. Several master accounts are the user's own choice. Still keep each strategy in its own sub-account.
+The master account can run a strategy. It shares one balance, one position, and one liquidation price with manual orders on that same account. A sub-account is optional. Creating one needs $100,000 of lifetime volume, and it keeps the strategy apart from those manual orders. One strategy on one account. Do not ask the user to open extra master accounts. Do not cancel or close an order that does not belong to that strategy.
 
 ## Path
 
@@ -65,6 +65,27 @@ voltjuice order --market BTC --side buy --notional 20
 
 8. After a live order is sent, offer one schedule for when the phone is closed. Each run stays at or under the cap. The schedule text must not contain the key. Pause with `voltjuice mode paper`.
 
+## Strategies from the desk
+
+https://app.voltjuice.xyz/bots creates four strategies: spot DCA, spot grid, contract grid, and smart position. The user signs with the master wallet. The desk stores the plan. It does not store a key, and it does not send the order.
+
+The phone can be off after that. A schedule runs the runner. The runner reads the plan and decides one action. With no box saved, that action is for the master account. Do not place the whole ladder in one wake.
+
+```bash
+voltjuice strategy pull
+voltjuice strategy box 0x...
+voltjuice strategy tick --mark 80000 --balance 40
+```
+
+`pull` copies the newest running plan. `tick` only decides. It does not send. When `account` is the master, send that one action with `voltjuice order --from-strategy`, at or under the cap, then record it with `voltjuice strategy note`. `strategy box 0x...` is optional and names a sub-account. `strategy box master` clears it. An order from this command lands on the master, so do not send it when `account` is a different address. A manual order on that same account needs the user to accept the shared position first, then `--share`.
+
+- Spot DCA: one buy to open, one buy to add after a dip, or one sell to take profit.
+- Spot grid and contract grid: one order at the nearest level inside the range. A start price waits until the mark reaches it. A price take-profit or stop closes on a later wake. Pass `--pnl` or `--roi` when the exit was set as an amount or a return.
+- Contract grid uses the direction and leverage on the plan. Long buys at or below the mark. Short sells at or above it. Neutral uses the nearer side.
+- Smart position: one coin per wake, and only after a holding drifts past the band. Pass the current values with `--holdings`.
+
+`import --file` is the same copy from a saved plan file. `quote` only prints the fee-adjusted grid profit. It does not send an order.
+
 ## Commands
 
 | Command | You do |
@@ -76,6 +97,10 @@ voltjuice order --market BTC --side buy --notional 20
 | `voltjuice mode live --cap 12` | Only after they name the cap. |
 | `voltjuice order ...` | One order, at least 11 USDC, not above the cap. |
 | `voltjuice mode paper` | Stop live orders. The key stays. |
+| `voltjuice strategy pull` | Copy the newest desk strategy. It runs on the master account. |
+| `voltjuice strategy tick --mark --balance` | Decide one action. Do not send it here. |
+| `voltjuice order ... --share` | A manual order while a strategy is running. Ask first. |
+| `voltjuice order ... --from-strategy` | The one order from the latest tick. Do not ask again. |
 
 There is no withdraw, transfer, or spot-to-contract command. `--leverage` is optional and limited to 1–20. To close, use the opposite side and `--reduce-only`.
 
