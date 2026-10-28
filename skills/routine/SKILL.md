@@ -23,6 +23,8 @@ Shared accounts never move funds between spot and contract. Split accounts stop 
 
 Each run reads `voltjuice account`, then sends one order inside the cap. A refused order is not retried larger. Close with the opposite side and `--reduce-only`. The text must not contain the key.
 
+A dip-buy cycle is `skills/strategy/SKILL.md`. It wakes every 15, 30, or 60 minutes and runs `voltjuice strategy tick` once. Do not poll every 5 minutes.
+
 Pause with `voltjuice mode paper` or by turning the routine off.
 
 If they name an end time, schedule a separate wake at that time whose only job is to pause and turn the routine off. A cron that stops at the previous hour, such as `0 5-7 * * *` for an 08:00 end, never reaches the end time, so a check inside those runs cannot turn it off. The last trading run is not a substitute. A daily cron left enabled trades again the next day. After the end time, the routine must show as off.

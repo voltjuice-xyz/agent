@@ -128,6 +128,16 @@ function textFiles(dir) {
   return out;
 }
 
+test("a strategy tick only prints the next action", () => {
+  const home = mkdtempSync(join(tmpdir(), "vj-"));
+  const set = run(["strategy", "set", "--market", "BTC", "--base", "11", "--add", "11", "--max-adds", "3", "--step", "1", "--tp", "1.5"], { home });
+  assert.equal(set.status, 0);
+  const tick = run(["strategy", "tick", "--mark", "80000", "--balance", "40", "--flat"], { home });
+  assert.equal(tick.status, 0);
+  assert.match(tick.stdout, /"action":"open"/);
+  assert.equal(tick.stdout.includes("route"), false);
+});
+
 test("docs and rules do not name the settlement venue", () => {
   const root = new URL("..", import.meta.url).pathname;
   const files = textFiles(root);
