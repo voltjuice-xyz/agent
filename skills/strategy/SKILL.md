@@ -16,7 +16,9 @@ Each wake does this and then stops:
 1. Read `voltjuice account` and one mark from `voltjuice markets`.
 2. If the account is flat, run `voltjuice strategy tick --mark <mark> --balance <balance> --flat`.
 3. Otherwise run `voltjuice strategy tick --mark <mark> --balance <balance>`.
-4. `wait` means do nothing. `open` or `add` means one market buy of the printed notional, then `voltjuice strategy note --action open --price <fill>` or `--action add`. `close` means one reduce-only market sell, then `voltjuice strategy note --action close`.
+4. `wait` means do nothing. `reason` `box` means there is no separate sub-account yet: tell them the planned action and do not send an order. `open` or `add` means one market buy of the printed notional, then `voltjuice strategy note --action open --price <fill>` or `--action add`. `close` means one reduce-only market sell, then `voltjuice strategy note --action close`.
+
+Save the sub-account with `voltjuice strategy box 0x...` before the first live tick. That address must not be the master address.
 
 Set the rule once with `voltjuice strategy set`. The base and each add are at least 11 USDC and inside the cap. Say the reserved total before the first live run: base plus add times the maximum adds.
 

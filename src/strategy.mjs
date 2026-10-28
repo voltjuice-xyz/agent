@@ -1,6 +1,6 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { MAX_CAP, MIN_NOTIONAL } from "./decide.mjs";
+import { isAddress, MAX_CAP, MIN_NOTIONAL } from "./decide.mjs";
 import { homeDir } from "./store.mjs";
 
 export function emptyStrategy() {
@@ -16,6 +16,7 @@ export function emptyStrategy() {
     last: 0,
     avg: 0,
     spent: 0,
+    box: "",
   };
 }
 
@@ -39,6 +40,7 @@ export function readStrategy() {
       last: Number(raw.last) || 0,
       avg: Number(raw.avg) || 0,
       spent: Number(raw.spent) || 0,
+      box: isAddress(raw.box) ? String(raw.box).toLowerCase() : "",
     };
   } catch {
     return emptyStrategy();
@@ -49,6 +51,20 @@ export function writeStrategy(next) {
   mkdirSync(homeDir(), { recursive: true, mode: 0o700 });
   writeFileSync(strategyPath(), `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
   return readStrategy();
+}
+
+/** A strategy box is a sub-account address, never the master account. */
+export function boxReady(box, master) {
+  const next = String(box ?? "").trim().toLowerCase();
+  const home = String(master ?? "").trim().toLowerCase();
+  if (!isAddress(next)) return false;
+  if (home && next === home) return false;
+  return true;
+}
+
+export function holdForBox(plan, box, master) {
+  if (boxReady(box, master)) return plan;
+  return { action: "wait", reason: "box", planned: plan.action ?? "wait" };
 }
 
 /** One wake, one action. The caller sends the order. This function never does. */

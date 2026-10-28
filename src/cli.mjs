@@ -4,7 +4,7 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 import { Wallet } from "ethers";
 import { decideOrder, isAddress, isPrivateKey, MAX_CAP, MIN_NOTIONAL, nextFromBalance, planOrder, scrub } from "./decide.mjs";
-import { applyFill, planDcaTick, readStrategy, writeStrategy } from "./strategy.mjs";
+import { applyFill, holdForBox, planDcaTick, readStrategy, writeStrategy } from "./strategy.mjs";
 import { forgetKey, keyStoreName, readKey, writeKey } from "./keychain.mjs";
 import { readConfig, readPaper, recordPaper, setMaster, setMode } from "./store.mjs";
 import { cancelOrder, listOrders, loadAccount, loadMarkets, loadSpotMarkets, sendOrder } from "./trade.mjs";
@@ -26,7 +26,7 @@ function help() {
   order --market BTC --side buy --notional 20 [--book perp|spot] [--type market|limit|stop-market|stop-limit|tp-market|tp-limit|scale|twap] [--price 80000] [--trigger 81000] [--scale-from 78000 --scale-to 76000 --scale-count 5] [--minutes 30] [--margin cross|isolated] [--leverage 5] [--tp 90000] [--sl 70000] [--reduce-only]
   orders
   cancel --market BTC --oid 123
-  strategy set|show|tick|note
+  strategy set|show|box|tick|note
 
 Practice mode is the default. The API wallet key stays in the keychain and cannot withdraw.`);
 }
@@ -286,7 +286,20 @@ function runStrategy(config) {
     const book = has("--flat") ? { ...saved, open: false, adds: 0, last: 0, avg: 0, spent: 0 } : saved;
     if (has("--flat") && saved.open) writeStrategy(book);
     const cap = config.mode === "live" ? config.cap : MAX_CAP;
-    console.log(JSON.stringify(planDcaTick({ ...book, mark: flag("--mark"), cap, balance: flag("--balance") })));
+    console.log(JSON.stringify(holdForBox(
+      planDcaTick({ ...book, mark: flag("--mark"), cap, balance: flag("--balance") }),
+      book.box,
+      config.master,
+    )));
+    return;
+  }
+  if (sub === "box") {
+    const address = String(process.argv[4] ?? flag("--address")).trim().toLowerCase();
+    if (!isAddress(address) || (config.master && address === config.master)) {
+      console.error("Pass a sub-account address. It cannot be the master address.");
+      process.exit(1);
+    }
+    console.log(JSON.stringify(writeStrategy({ ...readStrategy(), box: address })));
     return;
   }
   if (sub === "note") {
@@ -298,7 +311,7 @@ function runStrategy(config) {
     console.log(JSON.stringify(writeStrategy(next)));
     return;
   }
-  console.error("Use strategy show, set, tick, or note.");
+  console.error("Use strategy show, set, box, tick, or note.");
   process.exit(1);
 }
 

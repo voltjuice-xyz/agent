@@ -128,12 +128,20 @@ function textFiles(dir) {
   return out;
 }
 
-test("a strategy tick only prints the next action", () => {
+test("a strategy tick waits until it has its own sub-account", () => {
   const home = mkdtempSync(join(tmpdir(), "vj-"));
   const set = run(["strategy", "set", "--market", "BTC", "--base", "11", "--add", "11", "--max-adds", "3", "--step", "1", "--tp", "1.5"], { home });
   assert.equal(set.status, 0);
+  const blocked = run(["strategy", "tick", "--mark", "80000", "--balance", "40", "--flat"], { home });
+  assert.equal(blocked.status, 0);
+  assert.match(blocked.stdout, /"reason":"box"/);
+  assert.match(blocked.stdout, /"planned":"open"/);
+  const master = "0x1111111111111111111111111111111111111111";
+  const box = "0x2222222222222222222222222222222222222222";
+  assert.equal(run(["master", master], { home }).status, 0);
+  assert.equal(run(["strategy", "box", master], { home }).status, 1);
+  assert.equal(run(["strategy", "box", box], { home }).status, 0);
   const tick = run(["strategy", "tick", "--mark", "80000", "--balance", "40", "--flat"], { home });
-  assert.equal(tick.status, 0);
   assert.match(tick.stdout, /"action":"open"/);
   assert.equal(tick.stdout.includes("route"), false);
 });
