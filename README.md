@@ -71,7 +71,16 @@ The four bots and Grok's own strategy do not share a rule book.
 
 The four bots live on https://app.voltjuice.xyz/bots: spot DCA, spot grid, contract grid, and smart position. The user sets the parameters there and signs with the master wallet. The desk stores that plan. It does not store a key, and it does not send the order. `strategy tick` may only do what that plan already says. Do not add a signal or an exit.
 
-Grok's own strategy is not one of those four. Grok writes the rule—any quant conditions the user wants—and sends the order with the saved key. A time schedule wakes it. After the user connects on the API page, the site can also wake that one Grok with a price-level webhook when a trigger they saved is broken. Each master address has its own link. The site does not evaluate indicators; Grok does that on the wake. A raw tick, a fill, or another person's rule does not wake it. The usual schedule is still 15, 30, or 60 minutes. About 5 minutes is the short end and spends a full run each time. A slow buy can be hourly or daily.
+Grok's own strategy is not one of those four. Grok writes the rule—any quant conditions the user wants—and sends the order with the saved key.
+
+Wakes: (1) a time schedule; (2) custom price triggers that **Grok submits** with `wake rule` (the API page is read-only for those; site hand-entry is advanced-only); (3) **opt-in central indicator signals** on the API page / `wake subscribe` (fixed catalog such as BTC 15m MA20 cross). Central signals let Grok run nearer to 24/7 without watching every tick itself—the desk watches the fixed condition and POSTs when it fires. Each master address has its own webhook link. A raw tick, a fill, or another person's rule does not wake it. Usual schedule: 15, 30, or 60 minutes. About 5 minutes is costly. A slow buy can be hourly or daily.
+
+```bash
+voltjuice wake catalog
+voltjuice wake subscribe --id BTC-15m-MA20-x
+voltjuice wake rule --coin BTC --above 80000
+voltjuice wake signals
+```
 
 ## Strategies from the desk
 

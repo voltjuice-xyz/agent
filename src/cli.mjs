@@ -29,6 +29,9 @@ function help() {
   strategy set|show|box|tick|note|quote|import|pull
   wake bind --code ABC123
   wake rule --coin BTC --above 80000
+  wake catalog
+  wake subscribe --id BTC-15m-MA20-x
+  wake signals
 
 Practice mode is the default. The API wallet key stays in the keychain and cannot withdraw. The wake key stays in the secret card and is not printed.`);
 }
@@ -604,6 +607,80 @@ async function main() {
       process.exit(1);
     }
     console.log("Rule saved.");
+    return;
+  }
+  if (command === "wake" && process.argv[3] === "catalog") {
+    const site = String(process.env.VOLTJUICE_SITE || "https://app.voltjuice.xyz").replace(/\/$/, "");
+    const res = await fetch(`${site}/api/grok-wake/signals`);
+    const body = await res.json().catch(() => null);
+    if (!res.ok || !body || !Array.isArray(body.catalog)) {
+      console.error("Catalog unavailable.");
+      process.exit(1);
+    }
+    console.log(JSON.stringify({ ok: true, catalog: body.catalog }));
+    return;
+  }
+  if (command === "wake" && process.argv[3] === "subscribe") {
+    const token = readWakeToken();
+    const id = flag("--id").trim();
+    if (!token || !id) {
+      console.error("Need a linked wake and --id from wake catalog.");
+      process.exit(1);
+    }
+    const site = String(process.env.VOLTJUICE_SITE || "https://app.voltjuice.xyz").replace(/\/$/, "");
+    const listed = await fetch(`${site}/api/grok-wake/signals`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token, list: true }),
+    });
+    const listedBody = await listed.json().catch(() => null);
+    if (!listed.ok || !listedBody) {
+      console.error("Could not read current signals.");
+      process.exit(1);
+    }
+    const allow = new Set(
+      Array.isArray(listedBody.catalog) ? listedBody.catalog.map((row) => String(row.id ?? "")) : [],
+    );
+    if (!allow.has(id)) {
+      console.error("Unknown signal id. Run wake catalog.");
+      process.exit(1);
+    }
+    const next = Array.from(new Set([...(Array.isArray(listedBody.signals) ? listedBody.signals : []), id]));
+    const res = await fetch(`${site}/api/grok-wake/signals`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token, signals: next }),
+    });
+    if (!res.ok) {
+      console.error("Subscribe failed.");
+      process.exit(1);
+    }
+    console.log(JSON.stringify({ ok: true, signals: next }));
+    return;
+  }
+  if (command === "wake" && process.argv[3] === "signals") {
+    const token = readWakeToken();
+    if (!token) {
+      console.error("Need a linked wake.");
+      process.exit(1);
+    }
+    const site = String(process.env.VOLTJUICE_SITE || "https://app.voltjuice.xyz").replace(/\/$/, "");
+    const res = await fetch(`${site}/api/grok-wake/signals`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token, list: true }),
+    });
+    const body = await res.json().catch(() => null);
+    if (!res.ok || !body) {
+      console.error("Could not list signals.");
+      process.exit(1);
+    }
+    console.log(JSON.stringify({
+      ok: true,
+      catalog: Array.isArray(body.catalog) ? body.catalog : [],
+      signals: Array.isArray(body.signals) ? body.signals : [],
+      rules: Array.isArray(body.rules) ? body.rules : [],
+    }));
     return;
   }
   if (command === "strategy") return runStrategy(config);
