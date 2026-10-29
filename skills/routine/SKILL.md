@@ -25,7 +25,7 @@ Each run reads `voltjuice account`, then sends one order inside the cap. A refus
 
 A desk bot is not this routine. Its parameters stay on the site. `skills/strategy/SKILL.md` only runs the plan `voltjuice strategy pull` already copied. Wake it every 15, 30, or 60 minutes and run `voltjuice strategy tick` once. A slow buy can be once an hour or once a day. Do not use a 5 minute schedule unless they accept the cost of a full run each time. Do not add a rule the plan does not contain. The cycle runs on the master account. A sub-account is optional.
 
-Grok's own rule uses the same kind of wake. A time schedule is enough when the rule can wait. A bound price webhook from the API page POSTs once when that user's trigger is hit. Fills still do not wake it. Between wakes, a fill is not replaced until the next wake.
+Grok's own rule uses the same kind of wake. A time schedule is enough when the rule can wait; put the full quant conditions in the rule text. A bound price webhook from the API page POSTs once when that user's price trigger is hit, then the same rule runs once. Fills still do not wake it. Between wakes, a fill is not replaced until the next wake.
 
 Pause with `voltjuice mode paper` or by turning the routine off.
 

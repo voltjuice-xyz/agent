@@ -71,7 +71,7 @@ The four bots and Grok's own strategy do not share a rule book.
 
 The four bots live on https://app.voltjuice.xyz/bots: spot DCA, spot grid, contract grid, and smart position. The user sets the parameters there and signs with the master wallet. The desk stores that plan. It does not store a key, and it does not send the order. `strategy tick` may only do what that plan already says. Do not add a signal or an exit.
 
-Grok's own strategy is not one of those four. Grok writes the rule and sends the order with the saved key. A time schedule wakes it. After the user connects on the API page, the site can also wake that one Grok when a price they saved is touched. Each master address has its own link. A price tick, a fill, or another person's rule does not. The usual schedule is still 15, 30, or 60 minutes. About 5 minutes is the short end and spends a full run each time. A slow buy can be hourly or daily.
+Grok's own strategy is not one of those four. Grok writes the rule—any quant conditions the user wants—and sends the order with the saved key. A time schedule wakes it. After the user connects on the API page, the site can also wake that one Grok with a price-level webhook when a trigger they saved is broken. Each master address has its own link. The site does not evaluate indicators; Grok does that on the wake. A raw tick, a fill, or another person's rule does not wake it. The usual schedule is still 15, 30, or 60 minutes. About 5 minutes is the short end and spends a full run each time. A slow buy can be hourly or daily.
 
 ## Strategies from the desk
 
