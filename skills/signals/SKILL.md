@@ -26,7 +26,7 @@ Two kinds of Grok rule:
 - Self-running. The schedule is enough. The rule can wait until the next wake to open, add, close, or replace. This is the normal path. Most users stay here.
 - Needs an outside wake. Acting at the moment of a fill still needs something outside to POST, unless the site is watching a price level this user saved. A TradingView Pine alert is only for someone who already asked for that instant path. Do not teach it as the default.
 
-The site can wake this user when one of their own saved prices is touched. That link belongs to one master address. Do not reuse another person's code, URL, or key.
+The site can POST a price webhook when one of this user's own saved prices is touched. One-click pairing is for Grok Bot. The wire format is a normal HTTPS POST with Bearer auth and JSON (`event`, `coin`, `side`, `price`, `mark`); another receiver that accepts the same POST can bind the same way. That link belongs to one master address. Do not reuse another person's code, URL, or key.
 
 When they paste a pair code from the API page, do the rest. They never type a command.
 

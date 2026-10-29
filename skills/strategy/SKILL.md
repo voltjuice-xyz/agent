@@ -26,6 +26,6 @@ A hand order is not a wake. If `voltjuice next` includes `manual`, follow `skill
 
 Set the rule once with `voltjuice strategy set`. The base and each add are at least 11 USDC and inside the cap. Say the reserved total before the first live run: base plus add times the maximum adds.
 
-Grok does not watch the price between wakes. There is no exchange event for a tick, a fill, or an order change. The next schedule is the next chance to tick. A webhook runs that same tick once only when some other program POSTs it. Do not invent that program. Do not say the site will send it. Do not treat a wake as permission to add a rule.
+Grok does not watch the price between wakes. There is no exchange event for a tick, a fill, or an order change. The next schedule is the next chance to tick. A bound price webhook from the API page can POST once when that user's trigger is hit. Do not invent other senders. Do not treat a wake as permission to add a rule onto a desk bot.
 
 The key stays where it already is. Do not ask for a server to hold it.

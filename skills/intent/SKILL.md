@@ -38,7 +38,7 @@ There are two machines. Do not mix them. Read `skills/signals/SKILL.md`.
 
 The four bots on the site already have their parameters. If they mean one of those, do not add a rule. They change the parameters on the site. `voltjuice strategy pull` and `voltjuice strategy tick` only carry out that saved plan.
 
-Grok's own strategy is the other machine. Grok writes the rule and sends the order. It wakes on a schedule, normally every 15, 30, or 60 minutes, or once an hour or once a day for a slow buy. It does not see a price tick, a fill, or an order change. A fill between wakes is handled at the next wake, unless something else POSTs a webhook. VoltJuice does not send that webhook today. A TradingView alert is only for someone who already asked for the instant case.
+Grok's own strategy is the other machine. Grok writes the rule and sends the order. It wakes on a schedule, normally every 15, 30, or 60 minutes, or once an hour or once a day for a slow buy. It does not see a price tick, a fill, or an order change. A fill between wakes is handled at the next wake. A saved price level on the API page can POST a webhook when that price is touched; fills still do not. A TradingView alert is only for someone who already asked for that instant path.
 
 If they only said "automatic" and did not say which machine, ask once, in their language: use one of the four bots already on the site, or have Grok keep its own slow rule and check it on a schedule. Then follow that answer. Do not turn their sentence into a desk grid, a DCA, or a basket unless they asked for that bot.
 
