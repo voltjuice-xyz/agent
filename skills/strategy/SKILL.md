@@ -1,11 +1,13 @@
 ---
 name: voltjuice-strategy
-description: Run one slow dip-buy cycle. Use when the user wants prices to fall before adding, and the whole position sold at a take-profit. One wake does one action.
+description: Run a plan the desk already saved. Do not add rules. One wake does one action from that plan.
 ---
 
-# Slow dip-buy
+# A saved desk plan
 
-This is one buy, then extra buys only after the price falls, then one close when the average is up. It is not a grid, and it is not a check every few seconds.
+This runs a plan the desk already stored. It does not invent a quant rule. Spot DCA, spot grid, contract grid, and smart position keep the parameters set on the site. Do not add a signal, a filter, or an exit the plan does not contain.
+
+The slow dip-buy shape below is that saved plan: one buy, then extra buys only after the price falls, then one close when the average is up. It is not a grid, and it is not a check every few seconds. Grok's own strategy, with its own signals, is `skills/signals/SKILL.md`. Do not put those signals here.
 
 Run it on the master account. That account shares its balance, position, and liquidation price with a manual order. Two API wallets are two keys for that one balance, not two places to run this. A sub-account is optional, after $100,000 of lifetime volume, when they want the strategy kept apart. Do not cancel or close an order that is not part of this cycle.
 
@@ -24,6 +26,6 @@ A hand order is not a wake. If `voltjuice next` includes `manual`, follow `skill
 
 Set the rule once with `voltjuice strategy set`. The base and each add are at least 11 USDC and inside the cap. Say the reserved total before the first live run: base plus add times the maximum adds.
 
-Do not send a webhook for every price. A webhook is useful only when an outside program has already seen one level crossed. Then run the same tick once. Do not invent that program.
+Grok does not watch the price between wakes. There is no exchange event for a tick, a fill, or an order change. The next schedule is the next chance to tick. A webhook runs that same tick once only when some other program POSTs it. Do not invent that program. Do not say the site will send it. Do not treat a wake as permission to add a rule.
 
 The key stays where it already is. Do not ask for a server to hold it.

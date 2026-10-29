@@ -55,7 +55,7 @@ If `voltjuice` is missing, run `node ~/voltjuice-agent/src/cli.mjs`.
 
 5. `next` is `cap`. Ask how many USDC one live order may use. The minimum is 11. Then `voltjuice mode live --cap` with their number. Do not choose a cap yourself.
 
-6. `next` is `trade`. Ask once whether they want one order now or a strategy that keeps running. They answer in their own words. One situation ("buy BTC if it falls to 80000") is one order. "Automatic" or "24 hours" is a strategy: propose cross margin, 3x, a market entry, take-profit about 8% and a stop about 4%, and ask only if they want a different leverage. Do not hand them a blank form.
+6. `next` is `trade`. Ask once whether they want one order now or a strategy that keeps running. They answer in their own words. One situation ("buy BTC if it falls to 80000") is one order. "Automatic" is two different machines. The four bots on `/bots` keep the parameters set on the site. Do not add rules to them. Grok's own strategy is a slow rule it checks on a schedule, normally every 15 to 60 minutes. It does not see price ticks or fills. Read `skills/signals/SKILL.md`. Cross margin, 3x, take-profit about 8%, and a stop about 4% is only a connection check when they ask whether an order can be sent. Do not hand them a blank form.
 
 ```bash
 voltjuice order --market BTC --side buy --notional 20
@@ -65,9 +65,15 @@ voltjuice order --market BTC --side buy --notional 20
 
 8. After a live order is sent, offer one schedule for when the phone is closed. Each run stays at or under the cap. The schedule text must not contain the key. Pause with `voltjuice mode paper`.
 
-## Strategies from the desk
+## Two kinds of automatic
 
-https://app.voltjuice.xyz/bots creates four strategies: spot DCA, spot grid, contract grid, and smart position. The user signs with the master wallet. The desk stores the plan. It does not store a key, and it does not send the order.
+The four bots and Grok's own strategy do not share a rule book.
+
+The four bots live on https://app.voltjuice.xyz/bots: spot DCA, spot grid, contract grid, and smart position. The user sets the parameters there and signs with the master wallet. The desk stores that plan. It does not store a key, and it does not send the order. `strategy tick` may only do what that plan already says. Do not add a signal or an exit.
+
+Grok's own strategy is not one of those four. Grok writes the rule and sends the order with the saved key. A time schedule wakes it. After the user connects on the API page, the site can also wake that one Grok when a price they saved is touched. Each master address has its own link. A price tick, a fill, or another person's rule does not. The usual schedule is still 15, 30, or 60 minutes. About 5 minutes is the short end and spends a full run each time. A slow buy can be hourly or daily.
+
+## Strategies from the desk
 
 The phone can be off after that. A schedule runs the runner. The runner reads the plan and decides one action. With no box saved, that action is for the master account. Do not place the whole ladder in one wake.
 

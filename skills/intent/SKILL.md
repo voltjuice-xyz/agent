@@ -32,18 +32,16 @@ Say the order back in one sentence, then send it if they already asked you to do
 
 ## Always on
 
-Use this when they say automatic, all day, 24 hours, or a strategy. They do not need to know what a strategy contains.
+Use this when they say automatic, all day, 24 hours, or a strategy. That word is not a strategy. Do not answer it with one fixed plan. Cross margin, 3x, a market entry, take-profit about 8%, and a stop about 4% is only a connection check, and only when they ask to see whether an order can be sent. Say that it is a check. Do not call it their strategy.
 
-Propose one complete plan. Do not offer a menu of indicators. Fill every blank yourself:
+There are two machines. Do not mix them. Read `skills/signals/SKILL.md`.
 
-- Perp, cross margin, leverage 3. Say that 3x is the cautious default and isolated is only if they later ask for a separate position.
-- Market entry. Size is the smaller of their cap and one fifth of `balance`, and at least 11 USDC.
-- Take-profit about 8% past the mark, stop about 4% the other way. Long is `--side buy`. Short is `--side sell`. Use the direction they named, and repeat that word before the first order. If they did not say a direction, use long and say so. Never open the opposite side.
-- Each run: if that position is already open, do nothing. If not, send that one order. Never add a second position, and never raise the cap.
-- Shared balance stays where it is. The API wallet address receives nothing.
+The four bots on the site already have their parameters. If they mean one of those, do not add a rule. They change the parameters on the site. `voltjuice strategy pull` and `voltjuice strategy tick` only carry out that saved plan.
 
-Then one question only:
+Grok's own strategy is the other machine. Grok writes the rule and sends the order. It wakes on a schedule, normally every 15, 30, or 60 minutes, or once an hour or once a day for a slow buy. It does not see a price tick, a fill, or an order change. A fill between wakes is handled at the next wake, unless something else POSTs a webhook. VoltJuice does not send that webhook today. A TradingView alert is only for someone who already asked for the instant case.
 
-"Cross margin, 3x, a market order, take-profit about 8 percent, stop about 4 percent. If that position is already open, I will not add. Do you want a different leverage, or shall we use this?"
+If they only said "automatic" and did not say which machine, ask once, in their language: use one of the four bots already on the site, or have Grok keep its own slow rule and check it on a schedule. Then follow that answer. Do not turn their sentence into a desk grid, a DCA, or a basket unless they asked for that bot.
 
-A number from 1 to 20 replaces only the leverage. Any other change replaces only that one piece. When they accept, save the routine from the routine skill. Repeat the finished plan in plain language before the first live run.
+Size is the smaller of their cap and one fifth of `balance`, and at least 11 USDC, unless they named a size. Shared balance stays where it is. The API wallet address receives nothing. Each run reads `voltjuice account` first. If the rule says wait, send nothing. Never add a second position the rule did not name, and never raise the cap.
+
+When they accept, save the routine from the routine skill. Repeat the finished rule in plain language before the first live run. A leverage number from 1 to 20 changes only leverage. Any other answer changes only the piece they named.

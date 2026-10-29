@@ -5,7 +5,7 @@ description: Save a repeating VoltJuice strategy, not a one-off buy. Use after t
 
 # Strategy
 
-A routine is a quantitative loop. It is not one market buy. Do not invent a buy just to "start trading."
+A routine is Grok's own rule from `skills/signals/SKILL.md`. It is not one of the four desk bots, and it is not the connection check. Do not invent a buy just to "start trading." Do not add conditions onto a plan saved on the site.
 
 Read `voltjuice next` first. If `next` is not `trade`, finish that step. If `canTrade` is false, do not place an order.
 
@@ -23,7 +23,9 @@ Shared accounts never move funds between spot and contract. Split accounts stop 
 
 Each run reads `voltjuice account`, then sends one order inside the cap. A refused order is not retried larger. Close with the opposite side and `--reduce-only`. The text must not contain the key.
 
-A dip-buy cycle is `skills/strategy/SKILL.md`. It wakes every 15, 30, or 60 minutes and runs `voltjuice strategy tick` once. Do not poll every 5 minutes. The cycle runs on the master account. A sub-account is optional.
+A desk bot is not this routine. Its parameters stay on the site. `skills/strategy/SKILL.md` only runs the plan `voltjuice strategy pull` already copied. Wake it every 15, 30, or 60 minutes and run `voltjuice strategy tick` once. A slow buy can be once an hour or once a day. Do not use a 5 minute schedule unless they accept the cost of a full run each time. Do not add a rule the plan does not contain. The cycle runs on the master account. A sub-account is optional.
+
+Grok's own rule uses the same kind of wake. A time schedule is enough when the rule can wait. A webhook runs the same saved rule once, and only when some other program POSTs it. VoltJuice does not send price or fill webhooks. Between wakes, a fill is not replaced until the next wake.
 
 Pause with `voltjuice mode paper` or by turning the routine off.
 

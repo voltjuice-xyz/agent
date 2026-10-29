@@ -6,7 +6,7 @@ import { Wallet } from "ethers";
 import { decideOrder, isAddress, isPrivateKey, MAX_CAP, MIN_NOTIONAL, nextFromBalance, planOrder, scrub } from "./decide.mjs";
 import { applyFill, gridQuote, holdForBox, manualShare, planStrategyTick, readStrategy, strategyFromPlan, writeStrategy } from "./strategy.mjs";
 import { forgetKey, keyStoreName, readKey, writeKey } from "./keychain.mjs";
-import { readConfig, readPaper, recordPaper, setMaster, setMode } from "./store.mjs";
+import { readConfig, readPaper, readWakeToken, recordPaper, setMaster, setMode, writeWakeToken } from "./store.mjs";
 import { cancelOrder, listOrders, loadAccount, loadMarkets, loadSpotMarkets, sendOrder } from "./trade.mjs";
 
 function help() {
@@ -27,8 +27,10 @@ function help() {
   orders
   cancel --market BTC --oid 123
   strategy set|show|box|tick|note|quote|import|pull
+  wake bind --code ABC123
+  wake rule --coin BTC --above 80000
 
-Practice mode is the default. The API wallet key stays in the keychain and cannot withdraw.`);
+Practice mode is the default. The API wallet key stays in the keychain and cannot withdraw. The wake key stays in the secret card and is not printed.`);
 }
 
 function flag(name) {
@@ -68,6 +70,28 @@ function printStatus() {
       signer,
     }),
   );
+}
+
+function wakeField(name) {
+  const fromEnv = String(process.env[name] ?? "").trim();
+  if (fromEnv) return fromEnv;
+  const paths = [
+    process.env.GROK_BOX_SECRETS,
+    join(homedir(), "box-secrets.json"),
+    join(homedir(), ".grok", "box-secrets.json"),
+  ].filter(Boolean);
+  for (const path of paths) {
+    try {
+      if (!existsSync(path)) continue;
+      const parsed = JSON.parse(readFileSync(path, "utf8"));
+      const card = parsed?.card ?? parsed?.secrets ?? parsed;
+      const value = String(card?.[name] ?? "").trim();
+      if (value) return value;
+    } catch {
+      undefined;
+    }
+  }
+  return "";
 }
 
 function secretKey() {
@@ -531,6 +555,55 @@ async function main() {
     }
     await cancelOrder(key, listed.asset ?? listed.index, oid);
     console.log(JSON.stringify({ ok: true, oid }));
+    return;
+  }
+  if (command === "wake" && process.argv[3] === "bind") {
+    const code = flag("--code").trim().toUpperCase();
+    const url = wakeField("VOLTJUICE_WAKE_URL");
+    const key = wakeField("VOLTJUICE_WAKE_KEY");
+    if (!/^[A-Z0-9]{8}$/.test(code) || !url || !key) {
+      console.error("Need --code, plus secret cards VOLTJUICE_WAKE_URL and VOLTJUICE_WAKE_KEY. Do not paste the key into the chat.");
+      process.exit(1);
+    }
+    const site = String(process.env.VOLTJUICE_SITE || "https://app.voltjuice.xyz").replace(/\/$/, "");
+    const res = await fetch(`${site}/api/grok-wake/bind`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ code, url, key }),
+    });
+    const body = await res.json().catch(() => null);
+    const token = body && typeof body.token === "string" ? body.token : "";
+    if (!res.ok || !token) {
+      console.error("Wake link failed.");
+      process.exit(1);
+    }
+    writeWakeToken(token);
+    console.log("Wake linked.");
+    return;
+  }
+  if (command === "wake" && process.argv[3] === "rule") {
+    const token = readWakeToken();
+    const coin = flag("--coin").trim().toUpperCase();
+    const above = flag("--above");
+    const below = flag("--below");
+    const side = above ? "above" : below ? "below" : "";
+    const price = Number(above || below);
+    if (!token || !/^[A-Z0-9]{2,12}$/.test(coin) || !side || !(price > 0)) {
+      console.error("Need a linked wake, --coin, and --above or --below.");
+      process.exit(1);
+    }
+    const id = `${coin.toLowerCase()}-${side}-${String(price).replace(".", "")}`.replace(/[^a-z0-9-]/g, "").slice(0, 40);
+    const site = String(process.env.VOLTJUICE_SITE || "https://app.voltjuice.xyz").replace(/\/$/, "");
+    const res = await fetch(`${site}/api/grok-wake/rules`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ token, upsert: true, rules: [{ id, coin, side, price }] }),
+    });
+    if (!res.ok) {
+      console.error("Rule was not saved.");
+      process.exit(1);
+    }
+    console.log("Rule saved.");
     return;
   }
   if (command === "strategy") return runStrategy(config);

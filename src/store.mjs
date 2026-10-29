@@ -42,6 +42,20 @@ export function setMode(mode, cap) {
   return writeConfig({ mode: "live", cap: n });
 }
 
+export function readWakeToken() {
+  try {
+    const raw = JSON.parse(readFileSync(join(homeDir(), "wake.json"), "utf8"));
+    return String(raw.token ?? "");
+  } catch {
+    return "";
+  }
+}
+
+export function writeWakeToken(token) {
+  mkdirSync(homeDir(), { recursive: true });
+  writeFileSync(join(homeDir(), "wake.json"), `${JSON.stringify({ token })}\n`, { mode: 0o600 });
+}
+
 export function setMaster(address) {
   if (!isAddress(address)) return null;
   return writeConfig({ master: address.toLowerCase() });
