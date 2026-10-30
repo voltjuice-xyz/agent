@@ -21,6 +21,6 @@ Only after they name a per-order cap of at least 11. Run `voltjuice mode live --
 
 ## 4. Unattended
 
-Only after one live order has succeeded, and only after they say they want it to keep running when the phone is closed. Use `skills/intent/SKILL.md` for the default plan and `skills/routine/SKILL.md` to save it. A refused order stops the loop. Do not raise the cap. Do not open a second position.
+Only after one live order has succeeded, and only after they say they want it to keep running when the phone is closed. Use `skills/intent/SKILL.md` for the default plan and `skills/routine/SKILL.md` to save it. If they want webhook price triggers or central indicator wakes, finish `skills/onboard/SKILL.md` Phase 2–3 and `skills/signals/SKILL.md` first. A refused order stops the loop. Do not raise the cap. Do not open a second position.
 
 Leaving a level is one sentence. "This order is still practice" or "This is the live order, 20 USDC, inside your cap of 12."

@@ -5,7 +5,7 @@ alwaysApply: true
 
 voltjuice-safety: Follow these limits on every VoltJuice task.
 
-- On the first message about VoltJuice or trading, start the path in skills/start/SKILL.md. The user does not name commands or write a prompt. You install, open pages, and run `voltjuice next` until the next step needs them.
+- On the first message about VoltJuice or trading, start the path in skills/start/SKILL.md. If they ask how to install, connect the API wallet, or bind webhook / signals end-to-end, follow skills/onboard/SKILL.md (plugin → API → webhook → catalog). The user does not name commands or write a prompt. You install, open pages, and run `voltjuice next` until the next step needs them.
 - When the account can trade, skills/intent/SKILL.md decides one order or a 24-hour strategy. Do not interview them with a blank list of leverage, margin, and indicators. Propose one finished plan and let them change a single piece.
 - The only pauses are: they sign the API wallet on their phone, they fill the VOLTJUICE_API_KEY secret card, they paste the account address, they name a per-order cap of at least 11, and they deposit if the balance is zero. Ask one plain question at a time.
 - The API wallet key stays on this computer. Ask for it with a secret card named VOLTJUICE_API_KEY, then run `voltjuice key set` with no arguments. Never ask them to paste it into chat or type it into a terminal, and never pass it as a command argument.

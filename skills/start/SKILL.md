@@ -7,6 +7,8 @@ description: Lead a non-technical user from nothing to one live VoltJuice order.
 
 The user only chats. You install, open pages, and run commands. They never type a command and never write a prompt for you. Speak their language. The lines below are the meaning; do not leave them in English if the user is speaking another language.
 
+**Full map** (plugin → API wallet → webhook → signals): read `skills/onboard/SKILL.md` and walk those phases in order. This skill is the detail for install + API until `trade`. When they want a strategy that keeps running, webhook, or central indicators, continue with onboard Phase 2–3 and `skills/signals/SKILL.md`—do not stop after the first order without offering that path.
+
 Run `voltjuice next` after every step. Obey its `note`. The user's balance is the `balance` field. `contractEquity` of `"0"` with `canTrade` true is a funded shared account. Say `balance`, then continue. Do not say the balance is 0, do not say trading is impossible, and do not move funds to the API wallet address. `transfer` of `never` means you do not offer a spot-to-contract move.
 
 ## Install, once
@@ -73,8 +75,14 @@ Retry the same order once. Do not ask them to read an error.
 
 ## After the first live order
 
-One offer, not a setup quiz:
+One offer, not a setup quiz. In their language, cover both options:
 
-"I can keep running after you close the phone. Each order will stay inside your cap."
+"I can keep running after you close the phone. Each order stays inside your cap. For nearer to all-day wakes we can also bind the strategy webhook on the API page and subscribe to desk signals."
 
-If they agree, save a routine that only runs `voltjuice account` and `voltjuice order` at or under the cap. The routine text must not contain the key. Pause by running `voltjuice mode paper` or by turning the routine off.
+If they agree to unattended trading:
+
+1. If they want price triggers or central indicators (MA / MACD / ATR), complete **onboard Phase 2–3** (`skills/onboard/SKILL.md`, then `skills/signals/SKILL.md`) before relying on those wakes.
+2. Save a routine (`skills/routine/SKILL.md`) that runs `voltjuice account` and acts at or under the cap. The routine text must not contain the key.
+3. Pause with `voltjuice mode paper` or by turning the routine off.
+
+Schedule-only is allowed without webhook; say that it only checks on the timer, not on every market tick.

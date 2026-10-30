@@ -47,6 +47,8 @@ Do not teach TradingView → Grok direct as the default. Product path: bind on t
 
 ### Pairing steps
 
+For the place of this step in the full install → API → webhook path, see `skills/onboard/SKILL.md` Phase 2.
+
 When they paste a pair code from the API page, do the rest. They never type a command.
 
 **Hard rules**

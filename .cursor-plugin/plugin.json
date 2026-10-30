@@ -1,7 +1,7 @@
 {
   "name": "voltjuice",
-  "version": "0.4.0",
-  "description": "One VoltJuice plugin. The bot installs the account, places a single order from plain language, or builds a 24-hour strategy with the defaults filled in. The user does not type commands. The API wallet key stays on this computer and cannot withdraw.",
+  "version": "0.5.1",
+  "description": "One VoltJuice plugin. Leads install → API wallet → strategy webhook → central signals, then one live order or a 24-hour rule. The user does not type commands. Keys stay on this computer and cannot withdraw.",
   "author": {
     "name": "VoltJuice",
     "email": "info@voltjuice.xyz"

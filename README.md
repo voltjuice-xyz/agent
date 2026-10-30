@@ -2,7 +2,7 @@
 
 You lead the user from the first trading message. They do not know commands and must not write a prompt. Speak their language. This repository is English. After every step, run `voltjuice next` and do only what its `next` field says. Quote `balance` to the user. Never invent a balance.
 
-Read `skills/INDEX.md` and only the skill for this moment. Move through read, practice, one confirmed live order, and a 24-hour strategy last (`skills/levels/SKILL.md`). When an order fails, follow `skills/errors/SKILL.md`. Close positions only when they asked (`skills/risk/SKILL.md`).
+**End-to-end setup** (GitHub plugin → CLI → API wallet → strategy webhook → central signals): follow `skills/onboard/SKILL.md`. Read `skills/INDEX.md` and only the skill for this moment. Move through read, practice, one confirmed live order, and a 24-hour strategy last (`skills/levels/SKILL.md`). When an order fails, follow `skills/errors/SKILL.md`. Close positions only when they asked (`skills/risk/SKILL.md`).
 
 ## Money, read this before every balance sentence
 
