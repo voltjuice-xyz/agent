@@ -73,11 +73,13 @@ The four bots live on https://app.voltjuice.xyz/bots: spot DCA, spot grid, contr
 
 Grok's own strategy is not one of those four. Grok writes the rule—any quant conditions the user wants—and sends the order with the saved key.
 
-Wakes: (1) a time schedule; (2) custom price triggers that **Grok submits** with `wake rule` (the API page is read-only for those; site hand-entry is advanced-only); (3) **opt-in central indicator signals** on the API page / `wake subscribe` (fixed catalog such as BTC 15m MA20 cross). Central signals let Grok run nearer to 24/7 without watching every tick itself—the desk watches the fixed condition and POSTs when it fires. Each master address has its own webhook link. A raw tick, a fill, or another person's rule does not wake it. Usual schedule: 15, 30, or 60 minutes. About 5 minutes is costly. A slow buy can be hourly or daily.
+Wakes: (1) a time schedule; (2) custom price triggers that **Grok submits** with `wake rule` (the API page is read-only for those; site hand-entry is advanced-only); (3) **opt-in central indicator signals** on the API page / `wake subscribe`. Catalog is live from the desk (`wake catalog`): MA crosses, MACD golden/death (`…-MACD-xu` / `…-xd`), ATR long/short stops (`…-ATR1.5-long-sl`, `…-ATR2.0-short-sl`), across 15m / 1h / 4h / 1d. Central signals let Grok run nearer to 24/7 without watching every tick itself—the desk watches the fixed condition and POSTs when it fires. Each master address has its own webhook link. A raw tick, a fill, or another person's rule does not wake it. Usual schedule: 15, 30, or 60 minutes. About 5 minutes is costly. A slow buy can be hourly or daily.
 
 ```bash
 voltjuice wake catalog
 voltjuice wake subscribe --id BTC-15m-MA20-x
+voltjuice wake subscribe --id BTC-15m-MACD-xu
+voltjuice wake subscribe --id BTC-15m-ATR1.5-long-sl
 voltjuice wake rule --coin BTC --above 80000
 voltjuice wake signals
 ```

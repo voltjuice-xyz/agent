@@ -31,9 +31,17 @@ VoltJuice does **not** run a TradingView-Pine-style freeform condition engine fo
 
 1. **Schedule** — normal path for slow rules (15 / 30 / 60 minutes).
 2. **Custom price triggers** — Grok submits/updates them with `voltjuice wake rule` (token). The API page shows them **read-only**. Users almost never type prices on the site; the advanced manual form is optional for power users. Triggers change often in live trading—Grok updates them.
-3. **Central indicator subscriptions** — fixed desk signals (e.g. `BTC-15m-MA20-x`). Opt-in only (API page checkboxes, or `voltjuice wake subscribe --id …`). Like an RSS feed: subscribe → VoltJuice forwards when that signal fires → Grok runs the saved strategy. This compensates for Grok not watching the book 24/7.
+3. **Central indicator subscriptions** — fixed desk signals. Opt-in only (API page timeframe toggles, or `voltjuice wake subscribe --id …`). Like an RSS feed: subscribe → VoltJuice forwards when that signal fires → Grok runs the saved strategy. This compensates for Grok not watching the book 24/7.
 
-A central wake is a **condition fire**, not a trade order. `side` may be `cross`. Entries, TP, and SL come from the user’s saved rule.
+**Always** run `voltjuice wake catalog` (or tell them to open `/API`) for the live id list. Do not invent ids. Naming pattern `{coin}-{tf}-{indicator}-{dir}`:
+
+| Family | Example ids | Meaning |
+| --- | --- | --- |
+| MA cross | `BTC-15m-MA20-x`, `BTC-1h-MA50-x`, `BTC-4h-MA200-x` | Price crosses MA either way (`x`) |
+| MACD | `BTC-15m-MACD-xu`, `BTC-1h-MACD-xd` | `xu` = golden (MACD↑signal), `xd` = death (MACD↓signal) |
+| ATR stop | `BTC-15m-ATR1.5-long-sl`, `BTC-1d-ATR2.0-short-sl` | Long/short stop lines; multipliers `1.5` / `2.0` |
+
+Timeframes in ids: `15m`, `1h`, `4h`, `1d`. Fanout matches the subscribed id to the alert `note` (must be identical). A central wake is a **condition fire**, not a trade order. `side` may be `cross`. Entries, TP, and SL come from the user’s saved rule.
 
 Do not teach TradingView → Grok direct as the default. Product path: bind on the API page; desk forwards subscribed central signals.
 
@@ -56,7 +64,7 @@ When they paste a pair code from the API page, do the rest. They never type a co
 4. Frame C: standalone “Webhook key” control.
 5. Frame D: secret card `VOLTJUICE_WAKE_KEY`.
 6. `voltjuice wake bind --code THECODE`. Never print URL/key.
-7. After bind: `voltjuice wake catalog` and, if the strategy needs a fixed desk wake, `voltjuice wake subscribe --id BTC-15m-MA20-x` (or tell them to tick it on the API page). For moving price levels, `voltjuice wake rule --coin BTC --above 80000` and update as the plan changes. `voltjuice wake signals` lists catalog + current subscriptions + rules.
+7. After bind: `voltjuice wake catalog` and, if the strategy needs a fixed desk wake, subscribe the **exact** ids from the catalog (e.g. `voltjuice wake subscribe --id BTC-15m-MA20-x`, then again for `BTC-15m-MACD-xu` / `BTC-15m-ATR1.5-long-sl` as needed)—or tell them to tap the matching timeframes on the API page. For moving price levels, `voltjuice wake rule --coin BTC --above 80000` and update as the plan changes. `voltjuice wake signals` lists catalog + current subscriptions + rules.
 
 One confirmation is enough. Do not stack indicators to hide a weak rule.
 
